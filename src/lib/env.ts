@@ -1,5 +1,3 @@
-// Minimal environment validation for server-side usage
-// Add your keys to .env.local and restart dev server
 
 type EnvSpec = {
 	OPENAI_API_KEY: string;
@@ -40,6 +38,3 @@ export function getServerEnv(): EnvSpec {
 }
 
 export type { EnvSpec };
-
-
-

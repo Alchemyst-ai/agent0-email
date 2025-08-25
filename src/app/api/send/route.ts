@@ -1,35 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import OpenAI from "openai";
-import nodemailer from "nodemailer";
 import { getServerEnv } from "@/lib/env";
-
-const requestSchema = z.object({
-	emails: z.array(z.string().email()).min(1),
-	subject: z.string().min(3).max(120),
-	brief: z.string().min(10).max(4000),
-	format: z.enum(["formal", "casual", "friendly", "concise"]).default("friendly"),
-});
+import { sendEmailSchema } from "@/lib/schemas";
+import { createOpenAI } from "@/lib/ai";
+import { createMailer, sendEmail } from "@/lib/mailer";
 
 export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json();
-		const parsed = requestSchema.safeParse(body);
+		const parsed = sendEmailSchema.safeParse(body);
 		if (!parsed.success) {
 			return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 		}
 
-		const { OPENAI_API_KEY, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = getServerEnv();
-		const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+		const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = getServerEnv();
+		const openai = createOpenAI();
 		
-		const transporter = nodemailer.createTransport({
+		const transporter = createMailer({
 			host: SMTP_HOST,
 			port: parseInt(SMTP_PORT || "587"),
 			secure: SMTP_SECURE === "true",
-			auth: { user: SMTP_USER, pass: SMTP_PASS },
+			user: SMTP_USER,
+			password: SMTP_PASS,
 		});
 
-		const { emails, subject, brief, format } = parsed.data;
+		const { emails, subject, brief, format, action } = parsed.data;
 
 		const system = "You are an assistant that writes clear, actionable emails. Keep it polite and include a short CTA.";
 		const formatInstruction = format === "formal" ? "Write in a professional tone." : 
@@ -59,10 +53,23 @@ export async function POST(req: NextRequest) {
 		const html = generated.html || `<p>${generated.text || brief}</p>`;
 		const text = generated.text || brief;
 
+		// If action is preview, return the generated content without sending
+		if (action === "preview") {
+			return NextResponse.json({ 
+				ok: true, 
+				preview: {
+					subject: finalSubject,
+					html: html,
+					text: text,
+				}
+			});
+		}
+
+		// Otherwise, send the email
 		const results = [];
 		for (const to of emails) {
 			try {
-				const info = await transporter.sendMail({
+				const info = await sendEmail(transporter, {
 					from: SMTP_USER,
 					to: to,
 					subject: finalSubject,
