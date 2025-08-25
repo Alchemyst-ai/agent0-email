@@ -3,8 +3,9 @@
 import InboxTab from "./InboxTab";
 import SendEmailTab from "./SendEmailTab";
 import AiRepliesTab from "./AiRepliesTab";
+import EmailViewer from "./EmailViewer";
 
-type TabType = "inbox" | "send" | "ai-replies";
+type TabType = "inbox" | "send" | "ai-replies"|"email-viewer";
 
 type EmailMessage = {
 	messageId: string;
@@ -63,9 +64,9 @@ export default function TabContent({
 				<InboxTab
 					emails={emails}
 					loading={isRefreshing}
+					onCheckEmails={onCheckEmails}
 					sendingReplyId={sendingReplyId}
 					sendingQuickThanksId={sendingQuickThanksId}
-					onCheckEmails={onCheckEmails}
 					onSendReply={onSendReply}
 				/>
 			);
