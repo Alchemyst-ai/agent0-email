@@ -10,7 +10,7 @@ interface SidebarProps {
 const tabs = [
 	{ id: "inbox" as TabType, label: "Inbox", icon: Inbox },
 	{ id: "send" as TabType, label: "Send Email", icon: Send },
-	{ id: "ai-replies" as TabType, label: "AI Replies", icon: Bot },
+	// { id: "ai-replies" as TabType, label: "AI Replies", icon: Bot },
 ];
 
 export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {

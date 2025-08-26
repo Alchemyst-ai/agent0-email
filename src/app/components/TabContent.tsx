@@ -5,7 +5,7 @@ import SendEmailTab from "./SendEmailTab";
 import AiRepliesTab from "./AiRepliesTab";
 import EmailViewer from "./EmailViewer";
 
-type TabType = "inbox" | "send" | "ai-replies"|"email-viewer";
+type TabType = "inbox" | "send" | "ai-replies";
 
 type EmailMessage = {
 	messageId: string;
@@ -68,6 +68,10 @@ export default function TabContent({
 					sendingReplyId={sendingReplyId}
 					sendingQuickThanksId={sendingQuickThanksId}
 					onSendReply={onSendReply}
+					replyText={replyText}
+					autoReply={autoReply}
+					onReplyTextChange={onReplyTextChange}
+					onAutoReplyChange={onAutoReplyChange}
 				/>
 			);
 		case "send":
@@ -81,15 +85,6 @@ export default function TabContent({
 					onSubjectChange={onSubjectChange}
 					onBriefChange={onBriefChange}
 					onSendEmail={onSendEmail}
-				/>
-			);
-		case "ai-replies":
-			return (
-				<AiRepliesTab
-					replyText={replyText}
-					autoReply={autoReply}
-					onReplyTextChange={onReplyTextChange}
-					onAutoReplyChange={onAutoReplyChange}
 				/>
 			);
 		default:

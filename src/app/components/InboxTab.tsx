@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import EmailViewer from "./EmailViewer";
-import { on } from "events";
+import { Mail } from "lucide-react";
+
 
 type EmailMessage = {
 	messageId: string;
@@ -19,10 +20,15 @@ interface InboxTabProps {
 	sendingQuickThanksId?: string | null;
 	onCheckEmails: () => void;
 	onSendReply: (messageId: string, customText?: string) => void;
+	onReplyTextChange: (value: string) => void;
+	onAutoReplyChange: (value: boolean) => void;
+	replyText: string;
+	autoReply: boolean;
 }
 
-export default function InboxTab({ emails, loading, sendingReplyId, sendingQuickThanksId, onSendReply }: InboxTabProps) {
-	const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
+export default function InboxTab({ emails, loading, sendingReplyId, sendingQuickThanksId, onSendReply,onReplyTextChange,
+					onAutoReplyChange,replyText,autoReply }: InboxTabProps) {
+	const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(emails.length ? emails[0] : null);
 	if (loading) {
 		return <p className="text-gray-400 p-4">Loading...</p>;
 	}
@@ -33,13 +39,15 @@ export default function InboxTab({ emails, loading, sendingReplyId, sendingQuick
 
 	return (
 		<div className="flex h-full">
-			<div className="w-64 bg-gray-900 rounded-lg border-r-1 border-gray-700 h-full overflow-y-auto hide-scrollbar">
+			
+			<div className="w-32 md:w-64 pt-2 bg-gray-900 rounded-l-lg border-1 border-r-0 border-gray-800 h-full overflow-y-auto hide-scrollbar">
+				<h1 className="flex p-3 font-bold text-lg gap-2 text-sky-400 italic font-serif"><Mail className="text-white"/> Inbox </h1>
 				{[...emails]
 					.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 					.map((email) => (
 						<div
 							key={email.messageId}
-							className={`p-3 cursor-pointer hover:bg-gray-800 border-b-1 border-gray-700 transition ${selectedEmail?.messageId === email.messageId ? "bg-gray-800" : ""
+							className={`p-3 cursor-pointer hover:bg-gray-800 border-b-1 border-gray-800 transition ${selectedEmail?.messageId === email.messageId ? "bg-gray-800" : ""
 								}`}
 							onClick={() => setSelectedEmail(email)}
 						>
@@ -49,13 +57,17 @@ export default function InboxTab({ emails, loading, sendingReplyId, sendingQuick
 					))}
 			</div>
 			{selectedEmail && (
-				<div className="flex-1 px-4">
+				<div className="flex-1">
 					<EmailViewer
 						email={selectedEmail}
 						showActions={true}
 						sendingReplyId={sendingReplyId}
 						sendingQuickThanksId={sendingQuickThanksId}
 						onSendReply={onSendReply}
+						onReplyTextChange={onReplyTextChange}
+					    onAutoReplyChange={onAutoReplyChange}
+						replyText={replyText}
+						autoReply={autoReply}
 					/>
 				</div>
 			)}
