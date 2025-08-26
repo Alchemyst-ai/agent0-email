@@ -1,39 +1,47 @@
 "use client";
 
 import { useState } from "react";
+import { _email } from "zod/v4/core";
+import AiRepliesTab from "./AiRepliesTab";
+import { Bot } from "lucide-react";
 
 interface EmailViewerProps {
 	email: {
 		from?: string;
-		to?: string;
 		subject: string;
 		body: string;
 		date?: string;
 		messageId?: string;
 	};
-	mode: "view" | "edit" | "preview";
 	onSend?: (email: { to: string; subject: string; body: string }) => void;
 	onSave?: (email: { to: string; subject: string; body: string }) => void;
 	onClose?: () => void;
+	replyText: string;
+	autoReply: boolean;
 	loading?: boolean;
 	showActions?: boolean;
+	onSendReply?: (messageId: string, customText?: string) => void;
+	sendingReplyId?: string | null;
+	sendingQuickThanksId?: string | null;
+	onReplyTextChange: (value: string) => void;
+	onAutoReplyChange: (value: boolean) => void;
 }
 
 export default function EmailViewer({
 	email,
-	mode,
-	onSend,
-	onSave,
 	onClose,
 	loading = false,
+	replyText,
+	autoReply,
 	showActions = true,
+	onSendReply,
+	sendingReplyId,
+	sendingQuickThanksId,
+	onReplyTextChange,
+	onAutoReplyChange,
 }: EmailViewerProps) {
-	const [isEditing, setIsEditing] = useState(mode === "edit");
-	const [editedEmail, setEditedEmail] = useState({
-		to: email.to || "",
-		subject: email.subject,
-		body: email.body,
-	});
+
+	const [showAiReplies, setShowAiReplies] = useState(false);
 
 	const renderHtmlContent = (htmlContent: string) => {
 		const sanitizedHtml = htmlContent
@@ -51,204 +59,105 @@ export default function EmailViewer({
 		return /<[^>]*>/g.test(text);
 	};
 
-	const handleSend = () => {
-		if (onSend) {
-			onSend(editedEmail);
-		}
-	};
-
-	const handleSave = () => {
-		if (onSave) {
-			onSave(editedEmail);
-		}
-	};
-
-	const handleEdit = () => {
-		setIsEditing(true);
-	};
-
-	const handleCancel = () => {
-		setIsEditing(false);
-		setEditedEmail({
-			to: email.to || "",
-			subject: email.subject,
-			body: email.body,
-		});
-	};
-
 	return (
-		<div className="bg-gray-800 rounded-lg border border-gray-700 p-4 sm:p-6 w-full max-w-full overflow-hidden">
-			<div className="flex justify-between items-center mb-4">
-				<div className="flex items-center space-x-2">
-					<span className="text-lg">
-						{mode === "view" ? "📧" : mode === "edit" ? "✏️" : "👁️"}
-					</span>
-					<h3 className="text-lg font-semibold text-white">
-						{mode === "view" ? "Email Details" : mode === "edit" ? "Edit Email" : "Email Preview"}
-					</h3>
-				</div>
-				{onClose && (
-					<button
-						onClick={onClose}
-						className="text-gray-400 hover:text-white transition-colors"
-					>
-						✕
-					</button>
-				)}
-			</div>
+		<div className="bg-gray-900 rounded-r-lg border border-gray-800 sm:p-6 w-full max-w-full overflow-hidden">
 
+            <div className="bg-gray-950 rounded-lg p-4 sm:p-6 w-full max-w-full overflow-hidden">
 			{/* Email Content */}
-			<div className="space-y-4">
+			<div className="space-y-2">
 				{/* From Field (read-only) */}
 				{email.from && (
 					<div>
-						<label className="block text-sm font-medium text-gray-300 mb-1">From</label>
-						<div className="text-white bg-gray-700 p-3 rounded-lg">
+						From :
+						<div className="text-white rounded-lg">
 							{email.from}
 						</div>
 					</div>
 				)}
 
-				{/* To Field */}
-				<div>
-					<label className="block text-sm font-medium text-gray-300 mb-1">To</label>
-					{isEditing ? (
-						<input
-							type="email"
-							value={editedEmail.to}
-							onChange={(e) => setEditedEmail({ ...editedEmail, to: e.target.value })}
-							className="w-full border border-gray-600 rounded-lg p-3 bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-							placeholder="recipient@example.com"
-						/>
-					) : (
-						<div className="text-white bg-gray-700 p-3 rounded-lg">
-							{email.to || "Not specified"}
-						</div>
-					)}
-				</div>
+
 
 				{/* Subject Field */}
 				<div>
-					<label className="block text-sm font-medium text-gray-300 mb-1">Subject</label>
-					{isEditing ? (
-						<input
-							type="text"
-							value={editedEmail.subject}
-							onChange={(e) => setEditedEmail({ ...editedEmail, subject: e.target.value })}
-							className="w-full border border-gray-600 rounded-lg p-3 bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-							placeholder="Email subject"
-						/>
-					) : (
-						<div className="text-white bg-gray-700 p-3 rounded-lg font-medium">
-							{email.subject}
-						</div>
-					)}
+					Subject : {email.subject}
 				</div>
 
 				{/* Date Field (read-only) */}
 				{email.date && (
 					<div>
-						<label className="block text-sm font-medium text-gray-300 mb-1">Date</label>
-						<div className="text-gray-300 bg-gray-700 p-3 rounded-lg text-sm">
-							{new Date(email.date).toLocaleString()}
+						
+						<div className="text-gray-100 rounded-lg text-sm">
+							Date:{new Date(email.date).toLocaleString()}
 						</div>
+					</div>
+				)}
+				
+                {showAiReplies && (
+					<div className="w-full mt-4 ">
+						<AiRepliesTab
+							replyText={replyText}
+							autoReply={autoReply}
+							onReplyTextChange={onReplyTextChange}
+							onAutoReplyChange={onAutoReplyChange}
+						/>
+					</div>
+				)}
+
+				{showActions && (
+					<div className="flex flex-wrap gap-3 py-4 ">
+
+						{onSendReply && email.messageId && (
+							<>
+							    <button
+									onClick={() => email.messageId && onSendReply(email.messageId, "Thanks!")}
+									disabled={Boolean(sendingReplyId === email.messageId || sendingQuickThanksId === email.messageId)}
+									className="flex-1 sm:flex-none px-2 sm:px-3 py-2 text-xs sm:text-sm bg-gray-100 text-sky-500 font-semibold rounded hover:bg-gray-100/90 disabled:opacity-60 whitespace-nowrap hover:scale-95"
+								>
+									{sendingQuickThanksId === email.messageId ? "Sending..." : "Quick Thanks"}
+								</button>
+								{showAiReplies &&(<button
+									onClick={()=>email.messageId && onSendReply(email.messageId)}
+									disabled={Boolean(sendingReplyId === email.messageId || sendingQuickThanksId === email.messageId)}
+									className="flex-1 sm:flex-none px-2 sm:px-3 py-2 text-xs sm:text-sm bg-sky-500 text-white rounded hover:bg-sky-600 disabled:opacity-60 font-semibold whitespace-nowrap hover:scale-95"
+								>
+									{sendingReplyId === email.messageId ? "Sending..." : "AI Reply"}
+								</button>)
+                                }
+								
+				                <button onClick={()=>setShowAiReplies(!showAiReplies)}>
+									<Bot/>
+								</button>
+							</>
+						)}
+
+						
 					</div>
 				)}
 
 				{/* Body Field */}
 				<div>
-					<label className="block text-sm font-medium text-gray-300 mb-1">Message</label>
-					{isEditing ? (
-						<textarea
-							value={editedEmail.body}
-							onChange={(e) => setEditedEmail({ ...editedEmail, body: e.target.value })}
-							rows={8}
-							className="w-full border border-gray-600 rounded-lg p-3 bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
-							placeholder="Email content..."
-						/>
-					) : (
-						<div className="text-white bg-gray-700 p-3 rounded-lg max-h-96 overflow-y-auto">
-							{containsHtml(email.body) ? (
-								<div 
-									dangerouslySetInnerHTML={renderHtmlContent(email.body)}
-									className="prose prose-invert max-w-none"
-									style={{
-										color: 'white',
-										fontSize: '14px',
-										lineHeight: '1.6',
-									}}
-								/>
-							) : (
-								<div className="whitespace-pre-wrap">
-									{email.body}
-								</div>
-							)}
-						</div>
-					)}
+					<label className="block text-md font-medium text-gray-300 mb-4">Message</label>
+
+					<div className="text-white bg-gray-950 p-4 border-1 border-gray-700 hide-scrollbar rounded-lg max-h-160 overflow-y-auto">
+						{containsHtml(email.body) ? (
+							<div
+								dangerouslySetInnerHTML={renderHtmlContent(email.body)}
+								className="prose prose-invert max-w-none"
+								style={{
+									color: 'white',
+									fontSize: '14px',
+									lineHeight: '1.6',
+								}}
+							/>
+						) : (
+							<div className="text-sm whitespace-pre-wrap" style={{ color: 'white', fontSize: '14px', lineHeight: '1.6' }}>
+								{email.body}
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
-
-			{/* Actions */}
-			{showActions && (
-				<div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-gray-600">
-					{mode === "view" && (
-						<>
-							<button
-								onClick={handleEdit}
-								className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-							>
-								✏️ Edit
-							</button>
-							{onSend && (
-								<button
-									onClick={handleSend}
-									disabled={loading}
-									className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60 font-medium"
-								>
-									{loading ? "Sending..." : "📤 Send"}
-								</button>
-							)}
-						</>
-					)}
-
-					{mode === "edit" && (
-						<>
-							<button
-								onClick={handleSave}
-								disabled={loading}
-								className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60 font-medium"
-							>
-								💾 Save
-							</button>
-							<button
-								onClick={handleCancel}
-								className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
-							>
-								❌ Cancel
-							</button>
-						</>
-					)}
-
-					{mode === "preview" && onSend && (
-						<button
-							onClick={handleSend}
-							disabled={loading}
-							className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60 font-medium"
-						>
-							{loading ? "Sending..." : "📤 Send Email"}
-						</button>
-					)}
-
-					{onClose && (
-						<button
-							onClick={onClose}
-							className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
-						>
-							Close
-						</button>
-					)}
-				</div>
-			)}
+            </div>
 		</div>
 	);
 }

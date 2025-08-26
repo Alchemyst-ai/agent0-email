@@ -128,11 +128,14 @@ export default function Home() {
 	}
 
 	return (
-		<div className="h-screen bg-gray-900 flex overflow-hidden">
+		<div className="h-screen bg-gray-950 flex overflow-hidden">
 			<Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 			
-			<div className="flex-1 p-6 overflow-y-auto">
+			<div className="flex-1 px-6 overflow-y-auto">
+				<div className="flex items-center justify-between py-4 px-4">
+				<h1 className="text-2xl font-bold text-white">Email <span className="font-serif italic text-sky-400">Agent</span></h1>
 				<MessageDisplay error={error} success={success} />
+                </div>
 				
 				<TabContent
 					activeTab={activeTab}
