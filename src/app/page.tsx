@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import MessageDisplay from "./components/MessageDisplay";
 import TabContent from "./components/TabContent";
+import SendEmailTab from "./components/SendEmailTab";
+import { SquarePen } from "lucide-react";
 
 type TabType = "inbox" | "send" | "ai-replies";
 
@@ -16,6 +18,7 @@ type EmailMessage = {
 };
 
 export default function Home() {
+	const [showSendModal, setShowSendModal] = useState(false);
 	const [activeTab, setActiveTab] = useState<TabType>("inbox");
 	const [emails, setEmails] = useState<EmailMessage[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(false);
@@ -133,9 +136,46 @@ export default function Home() {
 			
 			<div className="flex-1 px-6 overflow-y-auto">
 				<div className="flex items-center justify-between py-4 px-4">
-				<h1 className="text-2xl font-bold text-white">Email <span className="font-serif italic text-sky-400">Agent</span></h1>
-				<MessageDisplay error={error} success={success} />
-                </div>
+					<h1 className="text-2xl font-bold text-white">Email <span className="font-serif italic text-sky-400">Agent</span></h1>
+					<div className="flex items-center gap-4">
+						<MessageDisplay error={error} success={success} />
+						<button
+							className="px-3 py-2 flex gap-1 text-white rounded "
+							onClick={() => setShowSendModal(true)}
+						>
+							<SquarePen/>Compose
+						</button>
+					</div>
+				</div>
+
+				{/* Send Email Modal */}
+				{showSendModal && (
+					<div className="fixed inset-0 z-50 flex items-center justify-center">
+						{/* backdrop */}
+						<div
+							className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+							onClick={() => setShowSendModal(false)}
+						/>
+						{/* modal card */}
+						<div className="relative w-full max-w-3xl p-4">
+							<div className="bg-gray-950 rounded-xl border border-gray-800 p-6 shadow-xl">
+								<SendEmailTab
+									recipients={recipients}
+									subject={subject}
+									brief={brief}
+									loading={isSendingEmail}
+									onRecipientsChange={setRecipients}
+									onSubjectChange={setSubject}
+									onBriefChange={setBrief}
+									onSendEmail={() => {
+										setShowSendModal(false);
+										sendEmail();
+									}}
+								/>
+							</div>
+						</div>
+					</div>
+				)}
 				
 				<TabContent
 					activeTab={activeTab}

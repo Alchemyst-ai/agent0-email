@@ -1,5 +1,5 @@
 "use client";
-import { Inbox, Send, Bot } from "lucide-react";
+import { Inbox, SquarePen, Bot } from "lucide-react";
 type TabType = "inbox" | "send" | "ai-replies";
 
 interface SidebarProps {
@@ -9,7 +9,7 @@ interface SidebarProps {
 
 const tabs = [
 	{ id: "inbox" as TabType, label: "Inbox", icon: Inbox },
-	{ id: "send" as TabType, label: "Send Email", icon: Send },
+	// { id: "send" as TabType, label: "Send Email", icon: SquarePen },
 	// { id: "ai-replies" as TabType, label: "AI Replies", icon: Bot },
 ];
 

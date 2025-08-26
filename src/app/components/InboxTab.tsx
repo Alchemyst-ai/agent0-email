@@ -40,8 +40,9 @@ export default function InboxTab({ emails, loading, sendingReplyId, sendingQuick
 	return (
 		<div className="flex h-full">
 			
-			<div className="w-32 md:w-64 pt-2 bg-gray-900 rounded-l-lg border-1 border-r-0 border-gray-800 h-full overflow-y-auto hide-scrollbar">
+			<div className="w-32 md:w-64 pt-2 bg-gray-900 rounded-xl border-1 border-gray-800">
 				<h1 className="flex p-3 font-bold text-lg gap-2 text-sky-400 italic font-serif"><Mail className="text-white"/> Inbox </h1>
+			    <div className="h-full md:h-[calc(100dvh-100px)] overflow-y-auto hide-scrollbar">
 				{[...emails]
 					.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 					.map((email) => (
@@ -55,9 +56,10 @@ export default function InboxTab({ emails, loading, sendingReplyId, sendingQuick
 							<p className="text-gray-400 text-sm truncate ">From: {email.from}</p>
 						</div>
 					))}
+				</div>
 			</div>
 			{selectedEmail && (
-				<div className="flex-1">
+				<div className="flex-1 pl-1">
 					<EmailViewer
 						email={selectedEmail}
 						showActions={true}

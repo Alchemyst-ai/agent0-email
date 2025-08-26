@@ -74,19 +74,19 @@ export default function TabContent({
 					onAutoReplyChange={onAutoReplyChange}
 				/>
 			);
-		case "send":
-			return (
-				<SendEmailTab
-					recipients={recipients}
-					subject={subject}
-					brief={brief}
-					loading={isSendingEmail}
-					onRecipientsChange={onRecipientsChange}
-					onSubjectChange={onSubjectChange}
-					onBriefChange={onBriefChange}
-					onSendEmail={onSendEmail}
-				/>
-			);
+		// case "send":
+		// 	return (
+		// 		<SendEmailTab
+		// 			recipients={recipients}
+		// 			subject={subject}
+		// 			brief={brief}
+		// 			loading={isSendingEmail}
+		// 			onRecipientsChange={onRecipientsChange}
+		// 			onSubjectChange={onSubjectChange}
+		// 			onBriefChange={onBriefChange}
+		// 			onSendEmail={onSendEmail}
+		// 		/>
+		// 	);
 		default:
 			return null;
 	}

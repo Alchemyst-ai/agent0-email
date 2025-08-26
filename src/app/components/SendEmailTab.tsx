@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import EmailViewer from "./EmailViewer";
 import { Bot, Send } from "lucide-react";
 
 interface SendEmailTabProps {
@@ -50,13 +49,14 @@ export default function SendEmailTab({
 					subject,
 					brief,
 					format: "friendly",
-					action: "preview", // Add this to indicate we want preview only
+					action: "preview", 
 				}),
 			});
 
 			if (res.ok) {
 				const data = await res.json();
 				if (data.preview) {
+					console.log("Generated Preview:", data.preview);
 					setGeneratedEmail({
 						to: recipients,
 						subject: data.preview.subject,
@@ -82,7 +82,16 @@ export default function SendEmailTab({
 		onSendEmail();
 	};
 
+	const handleCopyToForm = (emailData: { to: string; subject: string; body: string }) => {
+		onRecipientsChange(emailData.to);
+		onSubjectChange(emailData.subject);
+		onBriefChange(emailData.body);
+		setShowPreview(false);
+		setGeneratedEmail(null);
+	};
+
 	const handleClosePreview = () => {
+		// Hide the preview modal and clear the generated email
 		setShowPreview(false);
 		setGeneratedEmail(null);
 	};
@@ -150,20 +159,45 @@ export default function SendEmailTab({
 			{showPreview && generatedEmail && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
 					<div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-						<EmailViewer
-							email={generatedEmail}
-							onSend={handleSendFromPreview}
-							onClose={handleClosePreview}
-							loading={loading}
-							showActions={false}
-							onReplyTextChange={() => {}}
-							onAutoReplyChange={() => {}}
-							replyText ={generatedEmail.body}
-	                        autoReply ={false}
-						/>
+						<div className="bg-white rounded-lg shadow-lg overflow-hidden">
+							<div className="flex items-center justify-between px-6 py-4 border-b">
+								<div className="flex items-center gap-3">
+									<Send className="w-7 h-7 text-sky-600" />
+									<div>
+										<div className="text-sm text-gray-500">To</div>
+										<div className="font-medium text-gray-900 break-all">{generatedEmail.to}</div>
+									</div>
+								</div>
+								<div className="flex gap-2">
+									<button
+										className="px-3 py-1 bg-sky-600 text-white rounded"
+										onClick={() => handleSendFromPreview(generatedEmail)}
+									>
+										Use & Send
+									</button>
+									<button
+										className="px-3 py-1 bg-gray-100 text-gray-800 rounded"
+										onClick={() => handleCopyToForm(generatedEmail)}
+									>
+										Copy to form
+									</button>
+									<button
+										className="px-3 py-1 bg-transparent text-gray-600 rounded"
+										onClick={handleClosePreview}
+									>
+										Close
+									</button>
+								</div>
+							</div>
+							<div className="px-6 py-4">
+								<div className="text-lg font-semibold text-gray-900 mb-2">{generatedEmail.subject}</div>
+								<div className="text-sm text-gray-600 mb-4">Preview</div>
+								<div className="prose max-w-none text-gray-800 bg-white p-4 rounded border border-gray-200 overflow-auto max-h-[60vh]" dangerouslySetInnerHTML={{ __html: generatedEmail.body }} />
+							</div>
+						</div>
 					</div>
 				</div>
-			 )}
+			)}
 		</div>
 	);
 }
