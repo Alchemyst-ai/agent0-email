@@ -51,6 +51,7 @@ export default function SendEmailTab({
 					brief,
 					format: "friendly",
 					action: "preview", // Add this to indicate we want preview only
+					useEmailEngine: true,
 				}),
 			});
 

@@ -79,6 +79,7 @@ export default function Home() {
 					subject,
 					brief,
 					format: "friendly",
+					useEmailEngine: true,
 				}),
 			});
 			const data = await res.json();

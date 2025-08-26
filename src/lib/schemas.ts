@@ -6,6 +6,7 @@ export const sendEmailSchema = z.object({
 	brief: z.string().min(10).max(4000),
 	format: z.enum(["formal", "casual", "friendly", "concise"]).default("friendly"),
 	action: z.enum(["preview", "send"]).default("send"),
+	useEmailEngine: z.boolean().default(false),
 });
 
 export const replyActionSchema = z.object({

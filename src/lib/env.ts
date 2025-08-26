@@ -11,6 +11,8 @@ type EnvSpec = {
 	IMAP_USER?: string;
 	IMAP_PASS?: string;
 	IMAP_TLS?: string;
+	EMAIL_ENGINE_BASE_URL?: string;
+	EMAIL_ENGINE_API_KEY?: string;
 };
 
 function readEnv(): EnvSpec {
@@ -26,6 +28,8 @@ function readEnv(): EnvSpec {
 		IMAP_USER: process.env.IMAP_USER,
 		IMAP_PASS: process.env.IMAP_PASS,
 		IMAP_TLS: process.env.IMAP_TLS,
+		EMAIL_ENGINE_BASE_URL: process.env.EMAIL_ENGINE_BASE_URL,
+		EMAIL_ENGINE_API_KEY: process.env.EMAIL_ENGINE_API_KEY,
 	};
 }
 
