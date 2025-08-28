@@ -31,7 +31,8 @@ export default function AiRepliesTab({
 						disabled={autoReply}
 					/>
 				</div>
-				<div className="flex items-center space-x-3 pl-2">
+				<div className="flex flex-col items-left gap-2 space-x-3 pl-2 cursor-pointer">
+					<div>
 					<input
 						type="checkbox"
 						id="autoReply"
@@ -39,9 +40,23 @@ export default function AiRepliesTab({
 						onChange={(e) => onAutoReplyChange(e.target.checked)}
 						className="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
 					/>
-					<label htmlFor="autoReply" className="text-sm text-gray-200">
+					<label htmlFor="autoReply" className="text-sm text-gray-200 pl-2">
 						Use AI to generate reply automatically
 					</label>
+					</div>
+					<div className="relative group inline-flex items-center space-x-2">
+						<input
+							type="checkbox"
+							id="aiReply"
+							className="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500"
+						/>
+						<label htmlFor="aiReply" className="text-sm text-gray-200">
+							Enable auto reply 
+						</label>
+						<div className="absolute left-32 ml-2 w-64 p-2 rounded bg-gray-900 text-xs text-gray-200 shadow-lg hidden group-hover:block z-10">
+							<p className="text-xs text-gray-500 italic">* Auto-reply will automatically send AI-generated responses to all future emails received at this address.</p>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

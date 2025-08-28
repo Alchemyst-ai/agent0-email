@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AiRepliesTab from "./AiRepliesTab";
-import { Bot, Reply, Send, ChevronUp, ChevronDown } from "lucide-react";
+import { Bot, Reply, Send, ChevronUp, ChevronDown, EllipsisVertical } from "lucide-react";
 
 interface EmailViewerProps {
 	email: {
@@ -43,6 +43,8 @@ export default function EmailViewer({
 	const [showAiReplies, setShowAiReplies] = useState(false);
 	const [showThread, setShowThread] = useState(false);
 	const [expandedReplies, setExpandedReplies] = useState(new Set());
+	const [openReplySettings, setAutoReplySettings] = useState(false);
+    const [autoReplyEnabled, setAutoReply] = useState(false); //for auto-reply when you recieve a new mail
 
 	const toggleExpand = (id: string) => {
 		setExpandedReplies(prev => {
@@ -129,11 +131,41 @@ export default function EmailViewer({
 									{FormatDate(new Date(email.date))}
 								</div>
 							)}
-							<div onClick={() => setShowAiReplies(!showAiReplies)} className="flex gap-2 mt-2 justify-end">
-								<button className="flex gap-2"><Reply />reply</button>
-								<button >
-									<Bot className="hover:scale-95" />
+		                    <div className="flex items-center">
+							<div onClick={() => setShowAiReplies(!showAiReplies)} className="flex gap-2 justify-end">
+								<button className="flex gap-1"><Reply className="w-5 h-5"/>reply</button>
+							</div>
+							<div className="flex flex-col relative ">
+								<button onClick={() => setAutoReplySettings(prev => !prev)}>
+									<EllipsisVertical className="w-5 h-5 text-gray-200 hover:text-gray-300" />
 								</button>
+								<div>
+								{openReplySettings && (
+									<div className="absolute mt-2 top-full w-50 p-1 px-2 right-0 bg-gray-900/80 rounded-lg curoser-pointer">
+										<ul>
+											 <li className="flex gap-3">
+											<button
+											onClick={() => setAutoReply(!autoReplyEnabled)}
+											className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+												autoReply ? "bg-blue-600" : "bg-gray-950/60"
+											}`}
+											>
+											<span
+												className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+												autoReplyEnabled ? "translate-x-6" : "translate-x-1"
+												}`}
+											/>
+											</button>
+											<label htmlFor="toggleAutoReply" className="text-sm text-gray-200">
+											Enable Auto Reply
+											</label>
+										</li>
+										</ul>
+									</div>
+								)}
+								</div>
+							</div>
+					
 							</div>
 						</div>
 					</div>
@@ -190,7 +222,7 @@ export default function EmailViewer({
 								<div className="flex items-center gap-1 px-1 ">
 									<div className="text-md text-gray-200 pr-1 font-medium">Replies</div>
 									<button
-										className="flex items-center cursor-pointer gap-2 text-xs text-gray-200 px-2 py-1 bg-gray-800/60 rounded hover:bg-gray-800/70"
+										className="flex items-center gap-2 text-xs text-gray-200 px-2 py-1 bg-gray-800/60 cursor-pointer rounded hover:bg-gray-800/70"
 										onClick={() => setShowThread(!showThread)}
 									>
 										<span className="text-gray-300 ">{showThread ? '' : `${mockReplies.length}`}</span>

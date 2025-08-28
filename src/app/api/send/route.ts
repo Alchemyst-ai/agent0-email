@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerEnv } from "@/lib/env";
 import { sendEmailSchema } from "@/lib/schemas";
 import { createOpenAI } from "@/lib/ai";
-import { createMailer, sendEmail } from "@/lib/mailer";
+import { createMailer, sendEmail, sendEmailWithEmailEngine } from "@/lib/mailer";
 
 export async function POST(req: NextRequest) {
 	try {
@@ -12,25 +12,17 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 		}
 
-		const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = getServerEnv();
+		const env = getServerEnv();
 		const openai = createOpenAI();
-	
-		const transporter = createMailer({
-			host: SMTP_HOST,
-			port: parseInt(SMTP_PORT || "587"),
-			secure: SMTP_SECURE === "true",
-			user: SMTP_USER,
-			password: SMTP_PASS,
-		});
 		
-		const { emails, subject, brief, format, action } = parsed.data;
+		const { emails, subject, brief, format, action, useEmailEngine = true } = parsed.data;
 
 		const system = "You are an assistant that writes clear, actionable emails. Keep it polite and include a short CTA.";
 		const formatInstruction = format === "formal" ? "Write in a professional tone." : 
 								 format === "casual" ? "Write in a relaxed tone." : 
 								 format === "concise" ? "Write concisely." : 
 								 "Write in a friendly tone.";
-		// console.log("Generating email with OpenAI...");
+		console.log("Generating email with OpenAI...");
 		const completion = await openai.chat.completions.create({
 			model: "gpt-4o-mini",
 			messages: [
@@ -40,7 +32,7 @@ export async function POST(req: NextRequest) {
 			response_format: { type: "json_object" },
 			temperature: 0.7,
 		});
-        // console.log("OpenAI response received");
+        console.log("OpenAI response received");
 		const content = completion.choices[0]?.message?.content || "{}";
 		let generated: { subject?: string; html?: string; text?: string };
 		try {
@@ -67,24 +59,51 @@ export async function POST(req: NextRequest) {
 			});
 		}
 
-		// Otherwise, send the email
+		// Send emails using either EmailEngine or SMTP
 		const results = [];
-		for (const to of emails) {
-			try {
-				const info = await sendEmail(transporter, {
-					from: SMTP_USER,
-					to: to,
-					subject: finalSubject,
-					html: html,
-					text: text,
-				});
-				results.push({ to, id: info.messageId });
-			} catch (err: any) {
-				results.push({ to, error: err?.message || "Failed to send" });
+		const engineType = useEmailEngine && env.EMAIL_ENGINE_BASE_URL && env.EMAIL_ENGINE_API_KEY ? "emailengine" : "smtp";
+		
+		if (useEmailEngine) {
+			if (!env.EMAIL_ENGINE_BASE_URL || !env.EMAIL_ENGINE_API_KEY) {
+				return NextResponse.json({ 
+					error: "EmailEngine requested but not configured. Please set EMAIL_ENGINE_BASE_URL and EMAIL_ENGINE_API_KEY environment variables." 
+				}, { status: 500 });
+			}
+			
+			// Use EmailEngine
+			const emailEngineResults = await sendEmailWithEmailEngine(
+				{ to: emails, subject: finalSubject, html: html, text: text },
+				env.SMTP_USER || ""
+			);
+			
+			results.push(...emailEngineResults);
+		} else {
+			// Use SMTP (original method)
+			const transporter = createMailer({
+				host: env.SMTP_HOST,
+				port: parseInt(env.SMTP_PORT || "587"),
+				secure: env.SMTP_SECURE === "true",
+				user: env.SMTP_USER,
+				password: env.SMTP_PASS,
+			});
+
+			for (const to of emails) {
+				try {
+					const info = await sendEmail(transporter, {
+						from: env.SMTP_USER,
+						to: to,
+						subject: finalSubject,
+						html: html,
+						text: text,
+					});
+					results.push({ to, id: info.messageId, success: true });
+				} catch (err: any) {
+					results.push({ to, error: err?.message || "Failed to send", success: false });
+				}
 			}
 		}
 
-		return NextResponse.json({ ok: true, results });
+		return NextResponse.json({ ok: true, results, engine: engineType });
 	} catch (e) {
 		return NextResponse.json({ error: "Server error" }, { status: 500 });
 	}

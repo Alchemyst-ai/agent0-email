@@ -151,14 +151,15 @@ export default function Home() {
 				{/* Send Email Modal */}
 				{showSendModal && (
 					<div className="fixed bottom-0 right-10 z-50 flex items-center justify-center">
-						{/* backdrop covers full screen */}
+						{/* backdrop */}
 						<div
-							className="absolute top-8 right-8 z-60 cursor-pointer"
+							className="absolute top-8 right-10 z-60"
 							onClick={() => setShowSendModal(false)}
-						><ChevronDown/></div>
+						><ChevronDown/>
+						</div>
 						{/* modal card */}
-						<div className="relative w-full max-w-3xl z-10 mx-4">
-							<div className="bg-gray-950 shadow-xl">
+						<div className="bg-gray-950 relative w-full max-w-3xl">
+							<div className="shadow-xl">
 								<SendEmailTab
 									recipients={recipients}
 									subject={subject}
