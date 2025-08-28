@@ -125,13 +125,13 @@ export default function EmailViewer({
 						</div>
 						<div>
 							{email.date && (
-								<div className="text-gray-400 rounded-lg text-sm px-1">
+								<div className="text-gray-400 rounded-lg text-sm px-1 text-right">
 									{FormatDate(new Date(email.date))}
 								</div>
 							)}
-							<div className="flex gap-2 mt-2 justify-end">
+							<div onClick={() => setShowAiReplies(!showAiReplies)} className="flex gap-2 mt-2 justify-end">
 								<button className="flex gap-2"><Reply />reply</button>
-								<button onClick={() => setShowAiReplies(!showAiReplies)} >
+								<button >
 									<Bot className="hover:scale-95" />
 								</button>
 							</div>
@@ -187,10 +187,10 @@ export default function EmailViewer({
 
 					{/* Reply thread (collapsible preview with mock data) */}
 							<div className="my-3">
-								<div className="flex items-center justify-between px-1 ">
+								<div className="flex items-center gap-1 px-1 ">
 									<div className="text-md text-gray-200 pr-1 font-medium">Replies</div>
 									<button
-										className="flex items-center gap-2 text-xs text-gray-200 px-2 py-1 bg-gray-800/60 rounded hover:bg-gray-800/70"
+										className="flex items-center cursor-pointer gap-2 text-xs text-gray-200 px-2 py-1 bg-gray-800/60 rounded hover:bg-gray-800/70"
 										onClick={() => setShowThread(!showThread)}
 									>
 										<span className="text-gray-300 ">{showThread ? '' : `${mockReplies.length}`}</span>

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
 		const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SECURE } = getServerEnv();
 		const openai = createOpenAI();
-		
+	
 		const transporter = createMailer({
 			host: SMTP_HOST,
 			port: parseInt(SMTP_PORT || "587"),
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 			user: SMTP_USER,
 			password: SMTP_PASS,
 		});
-
+		
 		const { emails, subject, brief, format, action } = parsed.data;
 
 		const system = "You are an assistant that writes clear, actionable emails. Keep it polite and include a short CTA.";
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 								 format === "casual" ? "Write in a relaxed tone." : 
 								 format === "concise" ? "Write concisely." : 
 								 "Write in a friendly tone.";
-
+		// console.log("Generating email with OpenAI...");
 		const completion = await openai.chat.completions.create({
 			model: "gpt-4o-mini",
 			messages: [
@@ -40,11 +40,12 @@ export async function POST(req: NextRequest) {
 			response_format: { type: "json_object" },
 			temperature: 0.7,
 		});
-
+        // console.log("OpenAI response received");
 		const content = completion.choices[0]?.message?.content || "{}";
 		let generated: { subject?: string; html?: string; text?: string };
 		try {
 			generated = JSON.parse(content);
+			console.log("Generated email content:", generated);
 		} catch {
 			return NextResponse.json({ error: "Failed to generate email" }, { status: 502 });
 		}
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
 
 		// If action is preview, return the generated content without sending
 		if (action === "preview") {
+			console.log("Preview requested, not sending email.");
 			return NextResponse.json({ 
 				ok: true, 
 				preview: {
