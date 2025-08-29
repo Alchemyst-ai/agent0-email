@@ -5,7 +5,7 @@ import Sidebar from "./components/Sidebar";
 import MessageDisplay from "./components/MessageDisplay";
 import TabContent from "./components/TabContent";
 import SendEmailTab from "./components/SendEmailTab";
-import { ChevronDown, SquarePen } from "lucide-react";
+import { ChevronDown, SquarePen,X } from "lucide-react";
 
 type TabType = "inbox" | "send" | "ai-replies";
 
@@ -148,18 +148,16 @@ export default function Home() {
 					</div>
 				</div>
 
-				{/* Send Email Modal */}
 				{showSendModal && (
-					<div className="fixed bottom-0 right-10 z-50 flex items-center justify-center">
-						{/* backdrop */}
+					<div className=" flex items-center justify-center">
 						<div
-							className="absolute top-8 right-10 z-60"
+							className="absolute z-60 right-10 top-40"
 							onClick={() => setShowSendModal(false)}
-						><ChevronDown/>
+						><X className="w-4 h-4 text-gray-200"/>
 						</div>
 						{/* modal card */}
-						<div className="bg-gray-950 relative w-full max-w-3xl">
-							<div className="shadow-xl">
+						<div className="bg-gray-950 w-full max-w-3xl">
+							<div className="relative shadow-xl">
 								<SendEmailTab
 									recipients={recipients}
 									subject={subject}

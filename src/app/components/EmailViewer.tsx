@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AiRepliesTab from "./AiRepliesTab";
-import { Bot, Reply, Send, ChevronUp, ChevronDown, EllipsisVertical } from "lucide-react";
+import { Heart, Reply, Send, ChevronUp, ChevronDown, EllipsisVertical,MessageSquareText } from "lucide-react";
 
 interface EmailViewerProps {
 	email: {
@@ -118,6 +118,7 @@ export default function EmailViewer({
 								{email.subject}
 							</div>
 
+
 							{email.from && (
 								<div className="rounded-lg px-1 pt-0.5 flex gap-2">
 									<span className="text-sky-500 text-md">From :</span>
@@ -131,7 +132,7 @@ export default function EmailViewer({
 									{FormatDate(new Date(email.date))}
 								</div>
 							)}
-		                    <div className="flex items-center">
+		                    <div className="flex items-center justify-end">
 							<div onClick={() => setShowAiReplies(!showAiReplies)} className="flex gap-2 justify-end">
 								<button className="flex gap-1"><Reply className="w-5 h-5"/>reply</button>
 							</div>
@@ -146,12 +147,12 @@ export default function EmailViewer({
 											 <li className="flex gap-3">
 											<button
 											onClick={() => setAutoReply(!autoReplyEnabled)}
-											className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-												autoReply ? "bg-blue-600" : "bg-gray-950/60"
+											className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors duration-200 ${
+												autoReply ? "bg-sky-600" : "bg-gray-950/60"
 											}`}
 											>
 											<span
-												className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+												className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
 												autoReplyEnabled ? "translate-x-6" : "translate-x-1"
 												}`}
 											/>
@@ -231,13 +232,13 @@ export default function EmailViewer({
 								</div>
 
 								{showThread && (
-									<div className="mt-1 bg-gray-950 border-l-1 border-gray-800 rounded-lg p-3">
+									<div className="mt-1 bg-gray-950 border-l-1 border-gray-700 rounded-lg p-3">
 										{mockReplies.map((r) => {
 											const isExpanded = expandedReplies.has(r.id);
 
 											return (
-												<div key={r.id} className="mb-3 pb-2 last:mb-0 last:pb-0 last:border-0 border-b-1 border-gray-800">
-													<div className="flex items-start justify-between  cursor-pointer" onClick={() => toggleExpand(r.id)}>
+												<div key={r.id} className="p-2 py-3 last:mb-0 last:border-0 border-b-1 hover:bg-gray-900/50 border-gray-700">
+													<div className="flex items-start justify-between cursor-pointer" onClick={() => toggleExpand(r.id)}>
 														<div>
 															<div className="text-sm text-gray-200 font-medium">{r.author}</div>
 															<div className="text-xs text-gray-400">{FormatDate(new Date(r.date))}</div>
