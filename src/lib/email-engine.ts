@@ -238,8 +238,12 @@ export type SendEmailInput = {
 	subject: string;
 	text?: string;
 	html?: string;
-	inReplyTo?: string;
-	references?: string | string[];
+	reference?: {
+		message: string;
+		action: "reply" | "replyAll" | "forward";
+		inline?: boolean;
+		forwardAttachments?: boolean;
+	};
 };
 
 export type SendEmailResult = {
@@ -280,6 +284,11 @@ export async function sendEmailWithEmailEngine(input: SendEmailInput, fromEmail:
 				html: input.html,
 				trackOpens: true,
 			};
+
+			// Add reference object if this is a reply/forward
+			if (input.reference) {
+				payload.reference = input.reference;
+			}
 
 			// EmailEngine handles Microsoft domains differently
 			if (isMicrosoftDomain) {

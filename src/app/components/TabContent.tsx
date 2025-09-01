@@ -11,9 +11,25 @@ interface TabContentProps {
   selectedEmail: EmailMessage | null
   onEmailClick: (email: EmailMessage) => void
   loading: boolean
+  onPreviewGenerated?: (preview: { subject: string; html: string; text: string }) => void
+  onSendEmail?: (data: {
+    emails: string | string[]
+    subject: string
+    brief: string
+    format: "formal" | "casual" | "concise" | "friendly"
+    action: "send" | "preview"
+  }) => Promise<any>
 }
 
-export default function TabContent({ activeTab, emails, selectedEmail, onEmailClick, loading }: TabContentProps) {
+export default function TabContent({ 
+  activeTab, 
+  emails, 
+  selectedEmail, 
+  onEmailClick, 
+  loading, 
+  onPreviewGenerated,
+  onSendEmail 
+}: TabContentProps) {
   const handleSendEmail = async (data: {
     emails: string | string[]
     subject: string
@@ -21,15 +37,32 @@ export default function TabContent({ activeTab, emails, selectedEmail, onEmailCl
     format: "formal" | "casual" | "concise" | "friendly"
     action: "send" | "preview"
   }) => {
-    const response = await fetch("/api/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    })
-
-    return response.json()
+    if (data.action === 'preview') {
+      // For preview, call the API directly and then trigger the preview callback
+      const response = await fetch("/api/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      
+      const result = await response.json();
+      
+      if (result.preview && onPreviewGenerated) {
+        onPreviewGenerated(result.preview);
+      }
+      return result;
+    } else {
+      // For send actions, use the main page's handler if available
+      return await onSendEmail?.(data) || await fetch("/api/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }).then(res => res.json());
+    }
   }
 
   switch (activeTab) {

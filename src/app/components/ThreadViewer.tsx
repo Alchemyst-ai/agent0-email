@@ -24,6 +24,80 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 	const [replyText, setReplyText] = useState('');
 	const [sendingReply, setSendingReply] = useState(false);
 	const [viewMode, setViewMode] = useState<'chat' | 'thread'>('chat');
+	const [autoReplyMap, setAutoReplyMap] = useState<Map<string, boolean>>(new Map());
+	const [generatingAutoReply, setGeneratingAutoReply] = useState(false);
+	const [autoReplyContent, setAutoReplyContent] = useState<string>('');
+
+	// Get auto-reply state for current thread
+	const currentThreadAutoReply = autoReplyMap.get(email.threadId) || false;
+
+	// Toggle auto-reply for current thread only
+	const toggleAutoReply = async (enabled: boolean) => {
+		// Update the state first
+		setAutoReplyMap(prev => new Map(prev).set(email.threadId, enabled));
+		
+		// If auto-reply is being enabled, automatically generate and send
+		if (enabled) {
+			console.log('Auto-reply enabled, automatically generating and sending reply');
+			// Small delay to ensure state is updated, then generate and send
+			setTimeout(async () => {
+				await generateAutoReply(true); // Force auto-send when toggle is enabled
+			}, 100);
+		}
+	};
+
+	// Generate AI auto-reply for the entire thread
+	const generateAutoReply = async (forceAutoSend: boolean = false) => {
+		if (!email.threadId) {
+			console.error('No thread ID available for auto-reply');
+			alert('No thread ID available for auto-reply');
+			return;
+		}
+		
+		console.log('Generating auto-reply for thread:', email.threadId, 'forceAutoSend:', forceAutoSend);
+		setGeneratingAutoReply(true);
+		try {
+			// Call the auto-reply API
+			const response = await fetch('/api/auto-reply', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					threadId: email.threadId,
+					action: 'generate'
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to generate auto-reply');
+			}
+
+			const result = await response.json();
+			
+			// Always set the reply text in the input field
+			setReplyText(result.reply);
+			console.log('Generated reply:', result.reply);
+			
+			// Determine if we should auto-send
+			const shouldAutoSend = forceAutoSend || currentThreadAutoReply;
+			
+			if (shouldAutoSend) {
+				console.log('Auto-send enabled, sending automatically');
+				// Store the reply for auto-sending
+				setAutoReplyContent(result.reply);
+			} else {
+				// Manual mode: just show the generated reply
+				console.log('Manual mode, showing reply for review');
+			}
+			
+		} catch (error) {
+			console.error('Error generating auto-reply:', error);
+			alert('Failed to generate auto-reply. Please try again.');
+		} finally {
+			setGeneratingAutoReply(false);
+		}
+	};
 
 	useEffect(() => {
 		// Initialize messages with content tracking
@@ -36,6 +110,24 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 		}));
 		setMessagesWithContent(initialMessages);
 	}, [messages]);
+
+	// Auto-send reply when autoReplyContent is set and auto-reply is enabled
+	useEffect(() => {
+		if (autoReplyContent && currentThreadAutoReply && !generatingAutoReply) {
+			console.log('🔄 Auto-sending reply from useEffect');
+			console.log('Auto-reply content:', autoReplyContent);
+			
+			// Set the reply text and send
+			setReplyText(autoReplyContent);
+			
+			// Small delay to ensure state is updated, then send
+			setTimeout(() => {
+				handleSendReply();
+				// Clear the auto-reply content after sending
+				setAutoReplyContent('');
+			}, 100);
+		}
+	}, [autoReplyContent, currentThreadAutoReply, generatingAutoReply]);
 
 	const toggleMessage = async (messageId: string) => {
 		const message = messagesWithContent.find(m => m.id === messageId);
@@ -104,36 +196,49 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 	};
 
 	const handleSendReply = async () => {
-		if (!replyText.trim()) return;
+		if (!replyText.trim() || sendingReply) return;
 
+		console.log('🚀 Starting to send reply:', { replyText, emailFrom: email.from.address, subject: email.subject });
 		setSendingReply(true);
 		try {
+			// Always send as a reply to the thread using EmailEngine's reply format
+			const requestBody = {
+				emails: email.from.address,
+				subject: `Re: ${email.subject}`,
+				brief: replyText,
+				format: 'friendly',
+				action: 'send',
+				reference: {
+					message: email.id, // Use the EmailEngine message ID
+					action: "reply",
+					inline: true
+				}
+			};
+
+			console.log('📤 Sending request to /api/send:', requestBody);
+
 			const response = await fetch('/api/send', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({
-					emails: email.from.address,
-					subject: `Re: ${email.subject}`,
-					brief: replyText,
-					format: 'friendly',
-					action: 'send',
-					inReplyTo: email.messageId,
-					references: [email.messageId],
-				}),
+				body: JSON.stringify(requestBody),
 			});
 
+			console.log('📥 Response status:', response.status);
 			const result = await response.json();
+			console.log('📥 Response result:', result);
+
 			if (result.ok) {
+				console.log('✅ Reply sent successfully!');
 				setReplyText('');
-				// Optionally refresh the thread
-				window.location.reload();
 			} else {
-				console.error('Failed to send reply:', result.error);
+				console.error('❌ Failed to send reply:', result.error);
+				alert(`Failed to send reply: ${result.error}`);
 			}
 		} catch (error) {
-			console.error('Error sending reply:', error);
+			console.error('❌ Error sending reply:', error);
+			alert(`Error sending reply: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		} finally {
 			setSendingReply(false);
 		}
@@ -329,13 +434,54 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 
 			{/* Reply Input */}
 			<div className="p-4 border-t border-slate-200 bg-slate-50">
+			<div className="flex items-center justify-between mb-3">
+				{/* Auto-Reply Toggle */}
+				<div className="flex items-center justify-between mb-3">
+					<div className="flex items-center gap-2">
+						<label className="flex items-center gap-2 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={currentThreadAutoReply}
+								onChange={(e) => toggleAutoReply(e.target.checked)
+									
+								}
+								className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+							/>
+							<span className="text-sm font-medium text-slate-900">Auto-Generate & Send</span>
+						</label>
+						{currentThreadAutoReply && (
+							<span className="text-xs text-slate-500 bg-slate-200 px-2 py-1 rounded">
+								Auto-generate & send replies
+							</span>
+						)}
+					</div>
+				</div>
+				
+				{/* Generate Reply Button */}
+				<div className="flex items-center gap-2 mb-3">
+					<button
+						onClick={() => generateAutoReply(false)} // Manual mode
+						disabled={generatingAutoReply}
+						className="p-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+						title="Generate AI reply for this thread"
+					>
+						{generatingAutoReply ? (
+							<Loader2 className="w-4 h-4 animate-spin" />
+						) : (
+							<MessageSquare className="w-4 h-4" />
+						)}
+						<span className="ml-1">Generate Reply</span>
+					</button>
+				</div>
+			</div>
+				
 				<div className="flex gap-2">
 					<input
 						type="text"
 						value={replyText}
 						onChange={(e) => setReplyText(e.target.value)}
-						placeholder="Type your reply..."
-						className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+						placeholder="Generated reply will appear here. Edit if needed, then click Send."
+						className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900"
 						onKeyPress={(e) => {
 							if (e.key === 'Enter' && !e.shiftKey) {
 								e.preventDefault();

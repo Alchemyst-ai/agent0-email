@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import TabContent from "./components/TabContent";
 import ThreadViewer from "./components/ThreadViewer";
+import PreviewEditor from "./components/PreviewEditor";
 import { EmailMessage } from "@/lib/email-engine";
 
 export default function Home() {
@@ -13,6 +14,9 @@ export default function Home() {
 	const [threadMessages, setThreadMessages] = useState<EmailMessage[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [accountEmail, setAccountEmail] = useState<string>("");
+	const [previewContent, setPreviewContent] = useState<{ subject: string; html: string; text: string } | null>(null);
+	const [isEditingPreview, setIsEditingPreview] = useState(false);
+	const [recipients, setRecipients] = useState<string[]>([]);
 
 	const checkEmails = async () => {
 		try {
@@ -62,10 +66,55 @@ export default function Home() {
 		}
 	};
 
+	const handlePreviewGenerated = (preview: { subject: string; html: string; text: string }) => {
+		setPreviewContent(preview);
+		// Extract recipients from the current form state
+		// This will be handled by the SendEmailTab
+		setIsEditingPreview(true);
+	};
+
+	const handleSendEmail = async (data: {
+		emails: string | string[];
+		subject: string;
+		brief?: string;
+		html?: string;
+		format?: 'formal' | 'casual' | 'concise' | 'friendly';
+		action: 'send' | 'preview';
+	}) => {
+		try {
+			// Handle both data structures - from SendEmailTab and PreviewEditor
+			const requestBody = {
+				emails: data.emails,
+				subject: data.subject,
+				brief: data.brief || data.html || '', // Use brief if available, fallback to html
+				format: data.format || 'friendly', // Use format if available, default to friendly
+				action: data.action
+			};
+
+			const response = await fetch('/api/send', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(requestBody),
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to send email');
+			}
+
+			const result = await response.json();
+			return result;
+		} catch (error) {
+			console.error('Error sending email:', error);
+			throw error;
+		}
+	};
+
 	return (
 		<div className="flex h-screen bg-slate-50">
 			{/* Left Sidebar - Inbox */}
-			<div className="w-80 border-r border-slate-200 bg-white shadow-sm">
+			<div className="w-96 border-r border-slate-200 bg-white shadow-sm">
 				<div className="h-full flex flex-col">
 					{/* Header */}
 					<div className="p-4 border-b border-slate-200 bg-gradient-to-r from-blue-600 to-blue-700">
@@ -83,14 +132,30 @@ export default function Home() {
 							selectedEmail={selectedEmail}
 							onEmailClick={handleEmailClick}
 							loading={loading}
+							onPreviewGenerated={handlePreviewGenerated}
+							onSendEmail={handleSendEmail}
 						/>
 					</div>
 				</div>
 			</div>
 
-			{/* Right Side - Thread Viewer */}
+			{/* Right Side - Thread Viewer or Preview Editor */}
 			<div className="flex-1 bg-white">
-				{selectedEmail ? (
+				{isEditingPreview && previewContent ? (
+					<PreviewEditor
+						preview={previewContent}
+						onSend={() => {
+							setIsEditingPreview(false);
+							setPreviewContent(null);
+						}}
+						onBack={() => {
+							setIsEditingPreview(false);
+							setPreviewContent(null);
+						}}
+						onSendEmail={handleSendEmail}
+						recipients={recipients}
+					/>
+				) : selectedEmail ? (
 					<ThreadViewer
 						email={selectedEmail}
 						messages={threadMessages}

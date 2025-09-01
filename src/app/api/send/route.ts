@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 		const env = getServerEnv();
 		const openai = createOpenAI();
 		
-		const { emails, subject, brief, format, action } = parsed.data;
+		const { emails, subject, brief, format, action, reference } = parsed.data;
 
 		const system = "You are an assistant that writes clear, actionable emails. Keep it polite and include a short CTA.";
 		const formatInstruction = format === "formal" ? "Write in a professional tone." : 
@@ -68,7 +68,13 @@ export async function POST(req: NextRequest) {
 		
 		// Use EmailEngine
 		const results = await sendEmailWithEmailEngine(
-			{ to: emails, subject: finalSubject, html: html, text: text },
+			{ 
+				to: emails, 
+				subject: finalSubject, 
+				html: html, 
+				text: text,
+				reference: reference
+			},
 			env.EMAIL_ENGINE_ACCOUNT
 		);
 

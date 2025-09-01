@@ -6,6 +6,12 @@ export const sendEmailSchema = z.object({
 	brief: z.string().min(1),
 	format: z.enum(["formal", "casual", "concise", "friendly"]).default("friendly"),
 	action: z.enum(["send", "preview"]).default("send"),
+	reference: z.object({
+		message: z.string(),
+		action: z.enum(["reply", "replyAll", "forward"]),
+		inline: z.boolean().optional(),
+		forwardAttachments: z.boolean().optional()
+	}).optional(),
 });
 
 export const replyActionSchema = z.object({

@@ -108,7 +108,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 						value={recipients}
 						onChange={(e) => setRecipients(e.target.value)}
 						placeholder="recipient@example.com, another@example.com"
-						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white"
+						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white text-slate-900 placeholder-slate-500"
 						rows={3}
 					/>
 				</div>
@@ -123,7 +123,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 						value={subject}
 						onChange={(e) => setSubject(e.target.value)}
 						placeholder="Enter subject..."
-						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900 placeholder-slate-500"
 					/>
 				</div>
 
@@ -136,7 +136,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 						value={brief}
 						onChange={(e) => setBrief(e.target.value)}
 						placeholder="Describe what you want to say..."
-						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white"
+						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white text-slate-900 placeholder-slate-500"
 						rows={4}
 					/>
 				</div>
@@ -149,7 +149,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 					<select
 						value={format}
 						onChange={(e) => setFormat(e.target.value as any)}
-						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900"
 					>
 						<option value="friendly">Friendly</option>
 						<option value="formal">Formal</option>
@@ -170,20 +170,22 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 						) : (
 							<Eye className="w-4 h-4" />
 						)}
-						Preview
+						Generate
 					</button>
-					<button
-						onClick={handleSend}
-						disabled={loading}
-						className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm"
-					>
-						{loading ? (
-							<Loader2 className="w-4 h-4 animate-spin" />
-						) : (
-							<Send className="w-4 h-4" />
-						)}
-						Send Email
-					</button>
+					{preview && (
+						<button
+							onClick={handleSend}
+							disabled={loading}
+							className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 shadow-sm"
+						>
+							{loading ? (
+								<Loader2 className="w-4 h-4 animate-spin" />
+							) : (
+								<Send className="w-4 h-4" />
+							)}
+							Send Email
+						</button>
+					)}
 				</div>
 
 				{/* Messages */}
@@ -198,25 +200,6 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 					</div>
 				)}
 
-				{/* Preview */}
-				{preview && (
-					<div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-						<h3 className="font-medium text-slate-800 mb-2">Preview</h3>
-						<div className="space-y-2">
-							<div>
-								<span className="text-sm font-medium text-slate-600">Subject:</span>
-								<p className="text-sm text-slate-800">{preview.subject}</p>
-							</div>
-							<div>
-								<span className="text-sm font-medium text-slate-600">Content:</span>
-								<div 
-									className="text-sm text-slate-800 mt-1 prose prose-sm max-w-none"
-									dangerouslySetInnerHTML={{ __html: preview.html }}
-								/>
-							</div>
-						</div>
-					</div>
-				)}
 			</div>
 		</div>
 	);
