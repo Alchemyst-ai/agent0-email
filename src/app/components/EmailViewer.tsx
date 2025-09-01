@@ -3,15 +3,10 @@
 import { useState } from "react";
 import AiRepliesTab from "./AiRepliesTab";
 import { Heart, Reply, Send, ChevronUp, ChevronDown, EllipsisVertical,MessageSquareText } from "lucide-react";
+import { EmailMessage } from "@/lib/email-engine";
 
 interface EmailViewerProps {
-	email: {
-		from?: string;
-		subject: string;
-		body: string;
-		date?: string;
-		messageId?: string;
-	};
+	email: EmailMessage;
 	onSend?: (email: { to: string; subject: string; body: string }) => void;
 	onSave?: (email: { to: string; subject: string; body: string }) => void;
 	onClose?: () => void;
@@ -63,7 +58,7 @@ export default function EmailViewer({
 	const mockReplies: Array<{ id: string; author: string; date: string; body: string }> = [
 		{
 			id: 'r1',
-			author: email.from || 'alice@example.com',
+			author: email.from.name || email.from.address,
 			date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
 			body: 'Thanks for the update — I reviewed and this looks good to me. Let me know if you need anything else.'
 		},
@@ -119,19 +114,15 @@ export default function EmailViewer({
 							</div>
 
 
-							{email.from && (
-								<div className="rounded-lg px-1 pt-0.5 flex gap-2">
-									<span className="text-sky-500 text-md">From :</span>
-									<div className="text-gray-300 bg-gray-900/70 text-xs border-1 border-gray-800 rounded-full py-1 px-2">{email.from}</div>
-								</div>
-							)}
+							<div className="rounded-lg px-1 pt-0.5 flex gap-2">
+								<span className="text-sky-500 text-md">From :</span>
+								<div className="text-gray-300 bg-gray-900/70 text-xs border-1 border-gray-800 rounded-full py-1 px-2">{email.from.name || email.from.address}</div>
+							</div>
 						</div>
 						<div>
-							{email.date && (
-								<div className="text-gray-400 rounded-lg text-sm px-1 text-right">
-									{FormatDate(new Date(email.date))}
-								</div>
-							)}
+							<div className="text-gray-400 rounded-lg text-sm px-1 text-right">
+								{FormatDate(new Date(email.date))}
+							</div>
 		                    <div className="flex items-center justify-end">
 							<div onClick={() => setShowAiReplies(!showAiReplies)} className="flex gap-2 justify-end">
 								<button className="flex gap-1"><Reply className="w-5 h-5"/>reply</button>
@@ -172,16 +163,6 @@ export default function EmailViewer({
 					</div>
 
 
-					{/* <SendEmailTab
-					recipients={recipients}
-					subject={subject}
-					brief={brief}
-					loading={isSendingEmail}
-					onRecipientsChange={onRecipientsChange}
-					onSubjectChange={onSubjectChange}
-					onBriefChange={onBriefChange}
-					onSendEmail={onSendEmail}
-				/> */}
 					{showAiReplies && (
 						<div className="w-full mt-4 ">
 							<AiRepliesTab
@@ -268,21 +249,9 @@ export default function EmailViewer({
 						<label className="block text-md font-medium text-gray-300 mb-4">Message</label>
 
 						<div className="text-white bg-gray-950 p-4 border-1 border-gray-700 hide-scrollbar rounded-lg max-h-160 overflow-y-auto">
-							{containsHtml(email.body) ? (
-								<div
-									dangerouslySetInnerHTML={renderHtmlContent(email.body)}
-									className="prose prose-invert max-w-none"
-									style={{
-										color: 'white',
-										fontSize: '14px',
-										lineHeight: '1.6',
-									}}
-								/>
-							) : (
-								<div className="text-sm whitespace-pre-wrap" style={{ color: 'white', fontSize: '14px', lineHeight: '1.6' }}>
-									{email.body}
-								</div>
-							)}
+							<div className="text-sm text-gray-400">
+								Email content will be loaded when you click on a specific email to view the thread.
+							</div>
 						</div>
 					</div>
 				</div>

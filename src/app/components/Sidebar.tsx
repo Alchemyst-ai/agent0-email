@@ -1,39 +1,39 @@
-"use client";
-import { Inbox, SquarePen, Bot } from "lucide-react";
-type TabType = "inbox" | "send" | "ai-replies";
+'use client';
+
+import { Mail, Send, Bot } from 'lucide-react';
 
 interface SidebarProps {
-	activeTab: TabType;
-	onTabChange: (tab: TabType) => void;
+	activeTab: string;
+	setActiveTab: (tab: string) => void;
 }
 
-const tabs = [
-	{ id: "inbox" as TabType, label: "Inbox", icon: Inbox },
-	// { id: "send" as TabType, label: "Send Email", icon: SquarePen },
-	// { id: "ai-replies" as TabType, label: "AI Replies", icon: Bot },
-];
+export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+	const tabs = [
+		{ id: 'inbox', label: 'Inbox', icon: Mail },
+		{ id: 'send', label: 'Send Email', icon: Send },
+	];
 
-export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 	return (
-		<div className="w-20 bg-gray-900 border-r border-gray-700">
-			<div className="p-4 mt-10">
-				<nav className="space-y-2">
-					{tabs.map((tab) => (
-						<button
-							key={tab.id}
-							onClick={() => onTabChange(tab.id)}
-							className={`w-full flex items-center space-x-3 px-2 py-3 rounded-lg text-left transition-colors ${
-								activeTab === tab.id
-									? "bg-sky-500 text-white"
-									: "text-gray-300 hover:bg-gray-700 hover:text-white"
-							}`}
-						>
-							<span className="text-lg pl-1"><tab.icon/></span>
-							{/* <span className="font-medium">{tab.label}</span> */}
-						</button>
-					))}
-				</nav>
-			</div>
+		<div className="flex flex-col bg-white">
+			{tabs.map((tab) => {
+				const Icon = tab.icon;
+				return (
+					<button
+						key={tab.id}
+						onClick={() => setActiveTab(tab.id)}
+						className={`flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 ${
+							activeTab === tab.id
+								? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600 shadow-sm'
+								: 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+						}`}
+					>
+						<Icon className={`w-5 h-5 ${
+							activeTab === tab.id ? 'text-blue-600' : 'text-slate-500'
+						}`} />
+						<span className="font-medium">{tab.label}</span>
+					</button>
+				);
+			})}
 		</div>
 	);
 }

@@ -1,292 +1,223 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Bot, Send, X, Minus, Maximize2, Minimize2 } from "lucide-react";
+import { useState } from 'react';
+import { Send, Eye, Loader2 } from 'lucide-react';
 
 interface SendEmailTabProps {
-    recipients: string;
-    subject: string;
-    brief: string;
-    loading: boolean;
-    onRecipientsChange: (value: string) => void;
-    onSubjectChange: (value: string) => void;
-    onBriefChange: (value: string) => void;
-    onSendEmail: () => void;
+	onSendEmail: (data: {
+		emails: string | string[];
+		subject: string;
+		brief: string;
+		format: 'formal' | 'casual' | 'concise' | 'friendly';
+		action: 'send' | 'preview';
+	}) => Promise<any>;
 }
 
-interface GeneratedEmail {
-    to: string;
-    subject: string;
-    body: string;
-}
+export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
+	const [recipients, setRecipients] = useState('');
+	const [subject, setSubject] = useState('');
+	const [brief, setBrief] = useState('');
+	const [format, setFormat] = useState<'formal' | 'casual' | 'concise' | 'friendly'>('friendly');
+	const [loading, setLoading] = useState(false);
+	const [preview, setPreview] = useState<{ subject: string; html: string; text: string } | null>(null);
+	const [error, setError] = useState('');
+	const [success, setSuccess] = useState('');
 
-export default function SendEmailTab({
-    recipients,
-    subject,
-    brief,
-    loading,
-    onRecipientsChange,
-    onSubjectChange,
-    onBriefChange,
-    onSendEmail,
-}: SendEmailTabProps) {
-    const [generatedEmail, setGeneratedEmail] = useState<GeneratedEmail | null>(null);
-    const [showPreview, setShowPreview] = useState(false);
-    const [generating, setGenerating] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(false);
-    const [isMaximized, setIsMaximized] = useState(false);
+	const handlePreview = async () => {
+		if (!recipients || !subject || !brief) {
+			setError('Please fill in all fields');
+			return;
+		}
 
-    const handleGenerateEmail = async () => {
-        if (!recipients || !subject || !brief) {
-            return;
-        }
+		setLoading(true);
+		setError('');
+		setSuccess('');
 
-        setGenerating(true);
-        try {
-			console.log(recipients , brief, subject);
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		try {
+			const result = await onSendEmail({
+				emails: recipients.split(/[,\n]/).map(s => s.trim()).filter(Boolean),
+				subject,
+				brief,
+				format,
+				action: 'preview'
+			});
 
-			const emailArray = recipients
-				.split(/[,\n]/)  // Split by comma or newline
-				.map(s => s.trim())
-				.filter(Boolean)
-				.filter(email => {
-					if (!emailRegex.test(email)) {
-						console.warn(`Skipping invalid email: "${email}"`);
-						return false;
-					}
-					return true;
-				});
-    
-			if (emailArray.length === 0) {
-				console.error("No valid email addresses found");
-				return;
+			if (result.ok && result.preview) {
+				setPreview(result.preview);
+				setSuccess('Preview generated successfully!');
+			} else {
+				setError(result.error || 'Failed to generate preview');
 			}
-			// recipients.split(/[,\\n]/).map(s => s.trim()).filter(Boolean)
-            const res = await fetch("/api/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    emails: emailArray,
-                    subject,
-                    brief,
-                    format: "friendly",
-                    action: "preview", 
-					useEmailEngine: false 
-                }),
-            });
+		} catch (err: any) {
+			setError(err.message || 'Failed to generate preview');
+		} finally {
+			setLoading(false);
+		}
+	};
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data.preview) {
-                    console.log("Generated Preview:", data.preview);
-                    setGeneratedEmail({
-                        to: recipients,
-                        subject: data.preview.subject,
-                        body: data.preview.html || data.preview.text,
-                    });
-                    setShowPreview(true);
-                }
-            }
-        } catch (error) {
-            console.error("Failed to generate email:", error);
-        } finally {
-            setGenerating(false);
-        }
-    };
+	const handleSend = async () => {
+		if (!recipients || !subject || !brief) {
+			setError('Please fill in all fields');
+			return;
+		}
 
-    const handleSendFromPreview = (emailData: { to: string; subject: string; body: string }) => {
-        onRecipientsChange(emailData.to);
-        onSubjectChange(emailData.subject);
-        onBriefChange(emailData.body);
-        setShowPreview(false);
-        onSendEmail();
-    };
+		setLoading(true);
+		setError('');
+		setSuccess('');
 
-    const handleCopyToForm = (emailData: { to: string; subject: string; body: string }) => {
-        onRecipientsChange(emailData.to);
-        onSubjectChange(emailData.subject);
-        onBriefChange(emailData.body);
-        setShowPreview(false);
-        setGeneratedEmail(null);
-    };
+		try {
+			const result = await onSendEmail({
+				emails: recipients.split(/[,\n]/).map(s => s.trim()).filter(Boolean),
+				subject,
+				brief,
+				format,
+				action: 'send'
+			});
 
-    const handleClosePreview = () => {
-        setShowPreview(false);
-        setGeneratedEmail(null);
-    };
+			if (result.ok) {
+				setSuccess('Email sent successfully!');
+				setRecipients('');
+				setSubject('');
+				setBrief('');
+				setPreview(null);
+			} else {
+				setError(result.error || 'Failed to send email');
+			}
+		} catch (err: any) {
+			setError(err.message || 'Failed to send email');
+		} finally {
+			setLoading(false);
+		}
+	};
 
-    return (
-        <>
-            <div className={`fixed ${isMaximized ? 'inset-4' : 'bottom-0 right-4'} bg-gray-900 z-40 transition-all duration-300 ${isMinimized ? 'h-12' : isMaximized ? 'h-full' : 'h-[600px]'} ${isMaximized ? 'w-full' : 'w-[500px]'} max-w-full`}>
-                <div className="bg-gray-950/80 border border-gray-600 rounded-t-lg shadow-2xl flex flex-col h-full">
-                    {/* Header Bar */}
-                    <div className="flex items-center justify-between px-4 py-3  border-b border-gray-600 rounded-t-lg">
-                        <div className="flex items-center gap-3">
-                            <Send className="w-5 h-5 text-gray-300" />
-                            <span className="font-medium text-gray-100">New Mail</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <button 
-                                onClick={() => setIsMinimized(!isMinimized)}
-                                className="p-1.5 hover:bg-gray-700 rounded-full transition-colors"
-                            >
-                                {isMinimized ? <Maximize2 className="w-4 h-4 text-gray-300" /> : <Minus className="w-4 h-4 text-gray-300" />}
-                            </button>
-                            {/* <button 
-                                onClick={() => setIsMaximized(!isMaximized)}
-                                className="p-1.5 hover:bg-gray-700 rounded-full transition-colors"
-                            >
-                                {isMaximized ? <Minimize2 className="w-4 h-4 text-gray-300" /> : <Maximize2 className="w-4 h-4 text-gray-300" />}
-                            </button> */}
-                            <button className="p-1.5 rounded-full transition-colors">
-                                <X className="w-4 h-4 text-gray-900" />
-                            </button>
-                        </div>
-                    </div>
+	return (
+		<div className="h-full flex flex-col">
+			{/* Header */}
+			<div className="p-4 border-b border-slate-200 bg-gradient-to-r from-blue-600 to-blue-700">
+				<h2 className="text-lg font-semibold text-white">Compose Email</h2>
+			</div>
 
-                    {/* Content - Hidden when minimized */}
-                    {!isMinimized && (
-                        <div className="flex-1 flex flex-col">
-                            {/* Email Form Fields */}
-                            <div className="border-b border-gray-600">
-                                {/* To Field */}
-                                <div className="flex items-center px-4 py-3 border-b border-gray-600">
-                                    <label className="w-15 text-sm text-gray-300 font-medium">To :</label>
-                                    <input
-                                        className="flex-1 outline-none overflow-wrap text-gray-100 placeholder-gray-400 text-sm bg-transparent"
-                                        placeholder="Recipients"
-                                        value={recipients}
-                                        onChange={(e) => onRecipientsChange(e.target.value)}
-                                    />
-                                </div>
+			{/* Form */}
+			<div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
+				{/* Recipients */}
+				<div>
+					<label className="block text-sm font-medium text-slate-700 mb-2">
+						To (comma or newline separated)
+					</label>
+					<textarea
+						value={recipients}
+						onChange={(e) => setRecipients(e.target.value)}
+						placeholder="recipient@example.com, another@example.com"
+						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white"
+						rows={3}
+					/>
+				</div>
 
-                                {/* Subject Field */}
-                                <div className="flex items-center px-4 py-3">
-                                    <label className="w-15 text-sm text-gray-300 font-medium">Subject :</label>
-                                    <input
-                                        className="flex-1 outline-none overflow-wrap text-gray-100 placeholder-gray-400 text-sm bg-transparent"
-                                        placeholder="Subject"
-                                        value={subject}
-                                        onChange={(e) => onSubjectChange(e.target.value)}
-                                    />
-                                </div>
-                            </div>
+				{/* Subject */}
+				<div>
+					<label className="block text-sm font-medium text-slate-700 mb-2">
+						Subject
+					</label>
+					<input
+						type="text"
+						value={subject}
+						onChange={(e) => setSubject(e.target.value)}
+						placeholder="Enter subject..."
+						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+					/>
+				</div>
 
-                            {/* Message Body */}
-                            <div className="flex-1 p-4 bg-gray-900">
-                                <textarea
-                                    className="w-full h-full resize-none outline-none text-gray-100 placeholder-gray-400 text-sm leading-relaxed bg-transparent"
-                                    placeholder="Compose your message..."
-                                    value={brief}
-                                    onChange={(e) => onBriefChange(e.target.value)}
-                                />
-                            </div>
+				{/* Brief */}
+				<div>
+					<label className="block text-sm font-medium text-slate-700 mb-2">
+						Brief Description
+					</label>
+					<textarea
+						value={brief}
+						onChange={(e) => setBrief(e.target.value)}
+						placeholder="Describe what you want to say..."
+						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white"
+						rows={4}
+					/>
+				</div>
 
-                            {/* Bottom Toolbar */}
-                            <div className="flex items-center justify-between p-4 bg-gray-950/80 border-t border-gray-600">
-                                <div className="flex items-center gap-2">
-                                    
-                                    <button
-                                        onClick={onSendEmail}
-                                        disabled={loading || !recipients || !subject || !brief}
-                                        className="px-6 py-2 bg-sky-600 hover:bg-sky-700 disabled:bg-gray-600 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-2"
-                                    >
-                                        <Send className="w-4 h-4" />
-                                        {loading ? "Sending..." : "Send"}
-                                    </button>
+				{/* Format */}
+				<div>
+					<label className="block text-sm font-medium text-slate-700 mb-2">
+						Tone
+					</label>
+					<select
+						value={format}
+						onChange={(e) => setFormat(e.target.value as any)}
+						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+					>
+						<option value="friendly">Friendly</option>
+						<option value="formal">Formal</option>
+						<option value="casual">Casual</option>
+						<option value="concise">Concise</option>
+					</select>
+				</div>
 
-                                    <button
-                                        onClick={handleGenerateEmail}
-                                        disabled={generating || !recipients || !subject || !brief}
-                                        className="px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-600 text-gray-100 text-sm font-medium rounded-full transition-colors flex items-center gap-2"
-                                    >
-                                        {generating ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                                                Generating...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Bot className="w-4 h-4" />
-                                                AI Generate
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
+				{/* Action Buttons */}
+				<div className="flex gap-2 pt-4">
+					<button
+						onClick={handlePreview}
+						disabled={loading}
+						className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 shadow-sm"
+					>
+						{loading ? (
+							<Loader2 className="w-4 h-4 animate-spin" />
+						) : (
+							<Eye className="w-4 h-4" />
+						)}
+						Preview
+					</button>
+					<button
+						onClick={handleSend}
+						disabled={loading}
+						className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm"
+					>
+						{loading ? (
+							<Loader2 className="w-4 h-4 animate-spin" />
+						) : (
+							<Send className="w-4 h-4" />
+						)}
+						Send Email
+					</button>
+				</div>
 
-                                {/* Attachment and formatting tools
-                                <div className="flex items-center gap-2">
-                                    <button className="p-2 hover:bg-gray-700 rounded-full transition-colors">
-                                        <Paperclip className="w-4 h-4 text-gray-300" />
-                                    </button>
-                                    <button className="p-2 hover:bg-gray-700 rounded-full transition-colors">
-                                        <Image className="w-4 h-4 text-gray-300" />
-                                    </button>
-                                    <button className="p-2 hover:bg-gray-700 rounded-full transition-colors">
-                                        <MoreHorizontal className="w-4 h-4 text-gray-300" />
-                                    </button>
-                                </div> */}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
+				{/* Messages */}
+				{error && (
+					<div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+						<p className="text-red-600 text-sm">{error}</p>
+					</div>
+				)}
+				{success && (
+					<div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+						<p className="text-green-600 text-sm">{success}</p>
+					</div>
+				)}
 
-            {/* Preview Modal - Dark Theme */}
-            {showPreview && generatedEmail && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="w-full max-w-4xl max-h-[90vh] bg-gray-950 rounded-lg shadow-2xl overflow-hidden border border-gray-600">
-                        {/* Preview Header */}
-                        <div className="flex items-center justify-between px-6 py-4 bg-gray-900 border-b border-gray-600">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-sky-900/50 rounded-full flex items-center justify-center">
-                                    <Send className="w-4 h-4 text-sky-400" />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-medium text-gray-100">Email Preview</div>
-                                    <div className="text-xs text-gray-400">Generated by AI</div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium rounded-md transition-colors"
-                                    onClick={() => handleSendFromPreview(generatedEmail)}
-                                >
-                                    Send Now
-                                </button>
-                                <button
-                                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm font-medium rounded-md transition-colors"
-                                    onClick={() => handleCopyToForm(generatedEmail)}
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    className="p-2 hover:bg-gray-900 rounded-md transition-colors"
-                                    onClick={handleClosePreview}
-                                >
-                                    <X className="w-4 h-4 text-gray-300" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Email Details */}
-                        <div className="p-6 border-b border-gray-600">
-                            <div className="text-xs text-gray-400 mb-1">To:</div>
-                            <div className="text-sm text-gray-200 mb-3">{generatedEmail.to}</div>
-                            <div className="text-md font-semibold text-gray-100">{generatedEmail.subject}</div>
-                        </div>
-
-                        {/* Email Body */}
-                        <div className="p-6 overflow-auto max-h-[500px] bg-gray-950">
-                            <div 
-                                className="prose prose-sm prose-invert max-w-none text-gray-300 leading-relaxed"
-                                dangerouslySetInnerHTML={{ __html: generatedEmail.body }} 
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-    );
+				{/* Preview */}
+				{preview && (
+					<div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+						<h3 className="font-medium text-slate-800 mb-2">Preview</h3>
+						<div className="space-y-2">
+							<div>
+								<span className="text-sm font-medium text-slate-600">Subject:</span>
+								<p className="text-sm text-slate-800">{preview.subject}</p>
+							</div>
+							<div>
+								<span className="text-sm font-medium text-slate-600">Content:</span>
+								<div 
+									className="text-sm text-slate-800 mt-1 prose prose-sm max-w-none"
+									dangerouslySetInnerHTML={{ __html: preview.html }}
+								/>
+							</div>
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+	);
 }
