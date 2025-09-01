@@ -8,6 +8,7 @@ interface ThreadViewerProps {
 	email: EmailMessage;
 	messages: EmailMessage[];
 	onBack: () => void;
+	accountEmail: string;
 }
 
 interface MessageWithContent extends EmailMessage {
@@ -17,7 +18,7 @@ interface MessageWithContent extends EmailMessage {
 	contentLoading?: boolean;
 }
 
-export default function ThreadViewer({ email, messages, onBack }: ThreadViewerProps) {
+export default function ThreadViewer({ email, messages, onBack, accountEmail }: ThreadViewerProps) {
 	const [messagesWithContent, setMessagesWithContent] = useState<MessageWithContent[]>([]);
 	const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
 	const [replyText, setReplyText] = useState('');
@@ -149,7 +150,12 @@ export default function ThreadViewer({ email, messages, onBack }: ThreadViewerPr
 	};
 
 	const isOwnMessage = (message: EmailMessage) => {
-		return message.from.address === 'me.maverick369@gmail.com';
+		console.log('🔍 Checking message ownership:', {
+			messageFrom: message.from.address,
+			accountEmail: accountEmail,
+			isMatch: message.from.address === accountEmail
+		});
+		return message.from.address === accountEmail;
 	};
 
 	const renderChatView = () => (
@@ -189,12 +195,12 @@ export default function ThreadViewer({ email, messages, onBack }: ThreadViewerPr
 										</div>
 									) : message.html ? (
 										<div
-  className="prose prose-sm max-w-none p-4"
-  style={ {
-										color: "black"
-									}}
-  dangerouslySetInnerHTML={{ __html: message.html }}
-/>
+  										    className="prose prose-sm max-w-none p-4"
+  											style={ {
+											color: "black"
+													}}
+  											dangerouslySetInnerHTML={{ __html: message.html }}
+											/>
 
 									) : message.textContent ? (
 										<div className="whitespace-pre-wrap">{message.textContent}</div>

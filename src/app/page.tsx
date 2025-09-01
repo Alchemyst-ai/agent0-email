@@ -12,6 +12,7 @@ export default function Home() {
 	const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
 	const [threadMessages, setThreadMessages] = useState<EmailMessage[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [accountEmail, setAccountEmail] = useState<string>("");
 
 	const checkEmails = async () => {
 		try {
@@ -29,8 +30,22 @@ export default function Home() {
 		}
 	};
 
+	const getAccountInfo = async () => {
+		try {
+			const response = await fetch("/api/account");
+			if (!response.ok) {
+				throw new Error("Failed to fetch account info");
+			}
+			const data = await response.json();
+			setAccountEmail(data.account);
+		} catch (error) {
+			console.error("Error fetching account info:", error);
+		}
+	};
+
 	useEffect(() => {
 		checkEmails();
+		getAccountInfo();
 	}, []);
 
 	const handleEmailClick = async (email: EmailMessage) => {
@@ -83,6 +98,7 @@ export default function Home() {
 							setSelectedEmail(null);
 							setThreadMessages([]);
 						}}
+						accountEmail={accountEmail}
 					/>
 				) : (
 					<div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">

@@ -39,6 +39,25 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 		return email.subject;
 	};
 
+	// Group emails by threadId and get the most recent message from each thread
+	const getUniqueThreads = (emails: EmailMessage[]) => {
+		const threadMap = new Map<string, EmailMessage>();
+		
+		emails.forEach(email => {
+			const existing = threadMap.get(email.threadId);
+			if (!existing || new Date(email.date) > new Date(existing.date)) {
+				threadMap.set(email.threadId, email);
+			}
+		});
+		
+		// Convert back to array and sort by date (most recent first)
+		return Array.from(threadMap.values()).sort((a, b) => 
+			new Date(b.date).getTime() - new Date(a.date).getTime()
+		);
+	};
+
+	const uniqueThreads = getUniqueThreads(emails || []);
+
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-full">
@@ -50,7 +69,7 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 		);
 	}
 
-	if (!emails?.length) {
+	if (!uniqueThreads.length) {
 		return (
 			<div className="flex items-center justify-center h-full">
 				<div className="text-center">
@@ -68,24 +87,29 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 			<div className="p-4 border-b border-slate-200 bg-white">
 				<div className="flex items-center justify-between">
 					<h2 className="text-lg font-semibold text-slate-800">Inbox</h2>
-					<button
-						onClick={() => window.location.reload()}
-						className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 hover:text-slate-800"
-						title="Refresh"
-					>
-						<RefreshCw className="w-4 h-4" />
-					</button>
+					<div className="flex items-center gap-2">
+						<span className="text-sm text-slate-500">
+							{uniqueThreads.length} thread{uniqueThreads.length !== 1 ? 's' : ''}
+						</span>
+						<button
+							onClick={() => window.location.reload()}
+							className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 hover:text-slate-800"
+							title="Refresh"
+						>
+							<RefreshCw className="w-4 h-4" />
+						</button>
+					</div>
 				</div>
 			</div>
 
 			{/* Email List */}
 			<div className="flex-1 overflow-y-auto">
-				{emails.map((email) => (
+				{uniqueThreads.map((email) => (
 					<div
-						key={email.id}
+						key={email.threadId}
 						onClick={() => onEmailClick(email)}
 						className={`p-4 border-b border-slate-100 cursor-pointer transition-all duration-200 ${
-							selectedEmail?.id === email.id 
+							selectedEmail?.threadId === email.threadId 
 								? 'bg-blue-50 border-blue-200 shadow-sm' 
 								: 'hover:bg-slate-50 hover:border-slate-200'
 						}`}

@@ -14,7 +14,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 	];
 
 	return (
-		<div className="flex flex-col bg-white">
+		<div className="flex  bg-white">
 			{tabs.map((tab) => {
 				const Icon = tab.icon;
 				return (
