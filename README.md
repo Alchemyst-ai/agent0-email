@@ -1,6 +1,6 @@
 # Email Agent
 
-AI-powered email assistant built on Next.js App Router. It integrates with EmailEngine to fetch messages and send emails, generates replies using OpenAI, and can auto-reply to new incoming emails using a global toggle.
+AI-powered email management system with automated replies and email generation.
 
 ## Features
 
