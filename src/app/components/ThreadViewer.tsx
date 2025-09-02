@@ -24,27 +24,8 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 	const [replyText, setReplyText] = useState('');
 	const [sendingReply, setSendingReply] = useState(false);
 	const [viewMode, setViewMode] = useState<'chat' | 'thread'>('chat');
-	const [autoReplyMap, setAutoReplyMap] = useState<Map<string, boolean>>(new Map());
 	const [generatingAutoReply, setGeneratingAutoReply] = useState(false);
 	const [autoReplyContent, setAutoReplyContent] = useState<string>('');
-
-	// Get auto-reply state for current thread
-	const currentThreadAutoReply = autoReplyMap.get(email.threadId) || false;
-
-	// Toggle auto-reply for current thread only
-	const toggleAutoReply = async (enabled: boolean) => {
-		// Update the state first
-		setAutoReplyMap(prev => new Map(prev).set(email.threadId, enabled));
-		
-		// If auto-reply is being enabled, automatically generate and send
-		if (enabled) {
-			console.log('Auto-reply enabled, automatically generating and sending reply');
-			// Small delay to ensure state is updated, then generate and send
-			setTimeout(async () => {
-				await generateAutoReply(true); // Force auto-send when toggle is enabled
-			}, 100);
-		}
-	};
 
 	// Generate AI auto-reply for the entire thread
 	const generateAutoReply = async (forceAutoSend: boolean = false) => {
@@ -80,7 +61,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 			console.log('Generated reply:', result.reply);
 			
 			// Determine if we should auto-send
-			const shouldAutoSend = forceAutoSend || currentThreadAutoReply;
+			const shouldAutoSend = forceAutoSend;
 			
 			if (shouldAutoSend) {
 				console.log('Auto-send enabled, sending automatically');
@@ -111,9 +92,9 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 		setMessagesWithContent(initialMessages);
 	}, [messages]);
 
-	// Auto-send reply when autoReplyContent is set and auto-reply is enabled
+	// Auto-send reply when autoReplyContent is set (manual trigger only)
 	useEffect(() => {
-		if (autoReplyContent && currentThreadAutoReply && !generatingAutoReply) {
+		if (autoReplyContent && !generatingAutoReply) {
 			console.log('🔄 Auto-sending reply from useEffect');
 			console.log('Auto-reply content:', autoReplyContent);
 			
@@ -127,7 +108,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 				setAutoReplyContent('');
 			}, 100);
 		}
-	}, [autoReplyContent, currentThreadAutoReply, generatingAutoReply]);
+	}, [autoReplyContent, generatingAutoReply]);
 
 	const toggleMessage = async (messageId: string) => {
 		const message = messagesWithContent.find(m => m.id === messageId);
@@ -435,28 +416,6 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 			{/* Reply Input */}
 			<div className="p-4 border-t border-slate-200 bg-slate-50">
 			<div className="flex items-center justify-between mb-3">
-				{/* Auto-Reply Toggle */}
-				<div className="flex items-center justify-between mb-3">
-					<div className="flex items-center gap-2">
-						<label className="flex items-center gap-2 cursor-pointer">
-							<input
-								type="checkbox"
-								checked={currentThreadAutoReply}
-								onChange={(e) => toggleAutoReply(e.target.checked)
-									
-								}
-								className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-							/>
-							<span className="text-sm font-medium text-slate-900">Auto-Generate & Send</span>
-						</label>
-						{currentThreadAutoReply && (
-							<span className="text-xs text-slate-500 bg-slate-200 px-2 py-1 rounded">
-								Auto-generate & send replies
-							</span>
-						)}
-					</div>
-				</div>
-				
 				{/* Generate Reply Button */}
 				<div className="flex items-center gap-2 mb-3">
 					<button
