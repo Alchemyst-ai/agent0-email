@@ -31,10 +31,10 @@ export async function GET(
 		});
 		
 		return NextResponse.json({ messages });
-	} catch (error: any) {
+	} catch (error) {
 		console.error('Failed to fetch thread messages:', error);
 		return NextResponse.json(
-			{ error: error.message || 'Failed to fetch thread messages' },
+			{ error: (error as Error).message || 'Failed to fetch thread messages' },
 			{ status: 500 }
 		);
 	}

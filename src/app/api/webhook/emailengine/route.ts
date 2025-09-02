@@ -41,7 +41,7 @@ const handler = async (req: NextRequest) => {
             const threadMessages = searchResponse?.messages || [];
 
             // 2) Load latest message content
-            const latest = threadMessages.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+            const latest = threadMessages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
             const contentId = latest?.text?.id || latest?.id;
             let latestContentHtml = '';
             if (contentId) {
@@ -52,7 +52,7 @@ const handler = async (req: NextRequest) => {
             // 3) Build conversation context summary
             const context = threadMessages
               .slice(-5)
-              .map((m: any) => `${m.from?.name || m.from?.address || 'Unknown'} (${m.date}): ${m.subject}`)
+              .map((m) => `${m.from?.name || m.from?.address || 'Unknown'} (${m.date}): ${m.subject}`)
               .join('\n\n');
             const conversationContext = [latestContentHtml, context].filter(Boolean).join('\n\n');
 

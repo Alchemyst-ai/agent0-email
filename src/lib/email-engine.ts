@@ -163,11 +163,11 @@ export async function searchMessagesByThreadId(threadId: string): Promise<EmailS
 		throw new Error(`Failed to search messages: ${response.status} ${response.statusText}`);
 	}
 	
-	const data = await response.json();
+	const data: EmailSearchResponse = await response.json();
 	console.log('Search response for thread', threadId, ':', {
 		total: data.total,
 		messagesCount: data.messages?.length || 0,
-		messageIds: data.messages?.map((m: any) => ({ id: m.id, subject: m.subject, from: m.from?.name })) || []
+		messageIds: data.messages?.map((m) => ({ id: m.id, subject: m.subject, from: m.from?.name })) || []
 	});
 	
 	return data;
@@ -273,7 +273,7 @@ export async function sendEmailWithEmailEngine(input: SendEmailInput, fromEmail:
 
 	for (const recipient of recipients) {
 		try {
-			const payload: any = {
+			const payload: Record<string, unknown> = {
 				to: [
 					{
 						address: recipient,
@@ -310,7 +310,7 @@ export async function sendEmailWithEmailEngine(input: SendEmailInput, fromEmail:
 				}
 			);
 
-			const data = await response.json();
+			const data: { messageId?: string; queueId?: string; sentAt?: string; error?: string; message?: string } = await response.json();
 
 			if (response.ok) {
 				results.push({
@@ -327,10 +327,10 @@ export async function sendEmailWithEmailEngine(input: SendEmailInput, fromEmail:
 					success: false,
 				});
 			}
-		} catch (error: any) {
+		} catch (error) {
 			results.push({
 				to: recipient,
-				error: error?.message || "Failed to send",
+				error: (error as Error)?.message || "Failed to send",
 				success: false,
 			});
 		}

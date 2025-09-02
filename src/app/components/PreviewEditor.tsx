@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Send, Save, Eye, Code } from 'lucide-react';
+import { ArrowLeft, Send, Eye, Code } from 'lucide-react';
 
 interface PreviewEditorProps {
 	preview: {
@@ -17,7 +17,7 @@ interface PreviewEditorProps {
 		brief: string;
 		format: 'formal' | 'casual' | 'concise' | 'friendly';
 		action: 'send';
-	}) => Promise<any>;
+	}) => Promise<{ ok: boolean; error?: string }>;
 	recipients: string[];
 }
 
@@ -130,9 +130,9 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 						<div className="border border-slate-300 rounded-lg p-4 bg-white min-h-[300px]">
 							<div 
 								className="prose prose-sm max-w-none"
-                                style={{
-                                    color: "black"
-                                }}
+								style={{
+									color: "black"
+								}}
 								dangerouslySetInnerHTML={{ __html: editedHtml }}
 							/>
 						</div>

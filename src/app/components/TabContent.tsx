@@ -18,7 +18,7 @@ interface TabContentProps {
     brief: string
     format: "formal" | "casual" | "concise" | "friendly"
     action: "send" | "preview"
-  }) => Promise<any>
+  }) => Promise<{ ok: boolean; error?: string; preview?: { subject: string; html: string; text: string } }>
 }
 
 export default function TabContent({ 

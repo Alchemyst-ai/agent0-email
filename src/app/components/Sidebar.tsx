@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail, Send, Bot } from 'lucide-react';
+import { Mail, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface SidebarProps {

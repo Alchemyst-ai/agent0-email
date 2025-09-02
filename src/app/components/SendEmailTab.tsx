@@ -10,7 +10,7 @@ interface SendEmailTabProps {
 		brief: string;
 		format: 'formal' | 'casual' | 'concise' | 'friendly';
 		action: 'send' | 'preview';
-	}) => Promise<any>;
+	}) => Promise<{ ok: boolean; error?: string; preview?: { subject: string; html: string; text: string } }>;
 }
 
 export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
@@ -35,7 +35,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 
 		try {
 			const result = await onSendEmail({
-				emails: recipients.split(/[,\n]/).map(s => s.trim()).filter(Boolean),
+				emails: recipients.split(/[\,\n]/).map(s => s.trim()).filter(Boolean),
 				subject,
 				brief,
 				format,
@@ -48,8 +48,8 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 			} else {
 				setError(result.error || 'Failed to generate preview');
 			}
-		} catch (err: any) {
-			setError(err.message || 'Failed to generate preview');
+		} catch (err) {
+			setError((err as Error).message || 'Failed to generate preview');
 		} finally {
 			setLoading(false);
 		}
@@ -67,7 +67,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 
 		try {
 			const result = await onSendEmail({
-				emails: recipients.split(/[,\n]/).map(s => s.trim()).filter(Boolean),
+				emails: recipients.split(/[\,\n]/).map(s => s.trim()).filter(Boolean),
 				subject,
 				brief,
 				format,
@@ -83,8 +83,8 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 			} else {
 				setError(result.error || 'Failed to send email');
 			}
-		} catch (err: any) {
-			setError(err.message || 'Failed to send email');
+		} catch (err) {
+			setError((err as Error).message || 'Failed to send email');
 		} finally {
 			setLoading(false);
 		}
@@ -143,12 +143,12 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 
 				{/* Format */}
 				<div>
-					<label className="block text-sm font-medium text-slate-700 mb-2">
+					<label className="block text sm font-medium text-slate-700 mb-2">
 						Tone
 					</label>
 					<select
 						value={format}
-						onChange={(e) => setFormat(e.target.value as any)}
+						onChange={(e) => setFormat(e.target.value as 'formal' | 'casual' | 'concise' | 'friendly')}
 						className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900"
 					>
 						<option value="friendly">Friendly</option>

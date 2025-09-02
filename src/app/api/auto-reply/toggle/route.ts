@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     }
     setAutoReplyEnabled(body.enabled);
     return NextResponse.json({ ok: true, enabled: getAutoReplyEnabled() });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

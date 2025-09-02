@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AiRepliesTab from "./AiRepliesTab";
-import { Heart, Reply, Send, ChevronUp, ChevronDown, EllipsisVertical,MessageSquareText } from "lucide-react";
+import { Reply, Send, ChevronUp, ChevronDown, EllipsisVertical } from "lucide-react";
 import { EmailMessage } from "@/lib/email-engine";
 
 interface EmailViewerProps {

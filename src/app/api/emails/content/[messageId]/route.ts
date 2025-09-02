@@ -28,10 +28,10 @@ export async function GET(
 		});
 		
 		return NextResponse.json(content);
-	} catch (error: any) {
+	} catch (error) {
 		console.error('Failed to fetch message content:', error);
 		return NextResponse.json(
-			{ error: error.message || 'Failed to fetch message content' },
+			{ error: (error as Error).message || 'Failed to fetch message content' },
 			{ status: 500 }
 		);
 	}

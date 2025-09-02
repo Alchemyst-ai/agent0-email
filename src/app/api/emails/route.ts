@@ -18,10 +18,10 @@ export async function GET(req: NextRequest) {
 		const response = await getInboxMessages(pageSize);
 		
 		return NextResponse.json(response);
-	} catch (error: any) {
+	} catch (error) {
 		console.error('Failed to fetch inbox messages:', error);
 		return NextResponse.json(
-			{ error: error.message || 'Failed to fetch inbox messages' },
+			{ error: (error as Error).message || 'Failed to fetch inbox messages' },
 			{ status: 500 }
 		);
 	}
