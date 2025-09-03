@@ -7,19 +7,19 @@ interface MessageDisplayProps {
 
 export default function MessageDisplay({ error, success }: MessageDisplayProps) {
 	return (
-		<>
+		<div className="fixed top-4 right-4 z-50 space-y-2">
 			{error && (
-				<div className="w-100 mb-4 p-4 bg-red-900/20 border border-red-800 rounded-lg text-red-400 flex items-center">
-					<span className="mr-2">⚠️</span>
-					{error}
+				<div className="min-w-[240px] max-w-sm shadow-md mb-2 px-4 py-3 bg-red-50 border border-red-200 rounded-md text-red-800 flex items-start gap-2">
+					<span>⚠️</span>
+					<div className="text-sm leading-5 break-words">{error}</div>
 				</div>
 			)}
 			{success && (
-				<div className="w-60 mb-4 p-4 bg-green-900/20 border border-green-800 rounded-lg text-green-400 flex items-center">
-					<span className="mr-2">✅</span>
-					{success}
+				<div className="min-w-[240px] max-w-sm shadow-md px-4 py-3 bg-green-50 border border-green-200 rounded-md text-green-800 flex items-start gap-2">
+					<span>✅</span>
+					<div className="text-sm leading-5 break-words">{success}</div>
 				</div>
 			)}
-		</>
+		</div>
 	);
 }

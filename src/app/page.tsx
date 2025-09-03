@@ -68,8 +68,13 @@ export default function Home() {
 
 	const handlePreviewGenerated = (preview: { subject: string; html: string; text: string }) => {
 		setPreviewContent(preview);
-		// Extract recipients from the current form state
-		// This will be handled by the SendEmailTab
+		// Load recipients stored by SendEmailTab during preview generation
+		try {
+			const stored = sessionStorage.getItem('composeRecipients');
+			if (stored) {
+				setRecipients(JSON.parse(stored));
+			}
+		} catch {}
 		setIsEditingPreview(true);
 	};
 

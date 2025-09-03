@@ -34,29 +34,32 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 	};
 
 	const getPreviewText = (email: EmailMessage) => {
-		// For now, just show the subject as preview
-		// Later we can extract text from the first message in thread
 		return email.subject;
 	};
 
-	// Group emails by threadId and get the most recent message from each thread
+	// Group emails by threadId; keep latest for sorting, earliest for display
 	const getUniqueThreads = (emails: EmailMessage[]) => {
-		const threadMap = new Map<string, EmailMessage>();
+		const latestByThread = new Map<string, EmailMessage>();
+		const earliestByThread = new Map<string, EmailMessage>();
 		
 		emails.forEach(email => {
-			const existing = threadMap.get(email.threadId);
-			if (!existing || new Date(email.date) > new Date(existing.date)) {
-				threadMap.set(email.threadId, email);
+			const latest = latestByThread.get(email.threadId);
+			if (!latest || new Date(email.date) > new Date(latest.date)) {
+				latestByThread.set(email.threadId, email);
+			}
+			const earliest = earliestByThread.get(email.threadId);
+			if (!earliest || new Date(email.date) < new Date(earliest.date)) {
+				earliestByThread.set(email.threadId, email);
 			}
 		});
 		
-		// Convert back to array and sort by date (most recent first)
-		return Array.from(threadMap.values()).sort((a, b) => 
+		const sortedLatest = Array.from(latestByThread.values()).sort((a, b) => 
 			new Date(b.date).getTime() - new Date(a.date).getTime()
 		);
+		return { sortedLatest, earliestByThread };
 	};
 
-	const uniqueThreads = getUniqueThreads(emails || []);
+	const { sortedLatest: uniqueThreads, earliestByThread } = getUniqueThreads(emails || []);
 
 	if (loading) {
 		return (
@@ -117,22 +120,22 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 						<div className="flex items-start gap-3">
 							{/* Avatar */}
 							<div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm">
-								{email.from.name.charAt(0).toUpperCase()}
+								{(earliestByThread.get(email.threadId)?.from.name || email.from.name).charAt(0).toUpperCase()}
 							</div>
 
 							{/* Content */}
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center justify-between mb-1">
 									<span className="font-medium text-slate-800 truncate">
-										{email.from.name}
+										{earliestByThread.get(email.threadId)?.from.name || email.from.name}
 									</span>
 									<span className="text-xs text-slate-500 whitespace-nowrap ml-2">
-										{formatDate(email.date)}
+										{formatDate(earliestByThread.get(email.threadId)?.date || email.date)}
 									</span>
 								</div>
 								
 								<div className="text-sm font-medium text-slate-900 mb-1 truncate">
-									{email.subject}
+									{earliestByThread.get(email.threadId)?.subject || email.subject}
 								</div>
 								
 								{/* <div className="text-sm text-slate-600 truncate">

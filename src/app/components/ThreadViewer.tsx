@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { EmailMessage } from '@/lib/email-engine';
 import { ArrowLeft, Send, Loader2, MessageSquare, List } from 'lucide-react';
+import MessageDisplay from './MessageDisplay';
 
 interface ThreadViewerProps {
 	email: EmailMessage;
@@ -23,6 +24,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 	const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
 	const [replyText, setReplyText] = useState('');
 	const [sendingReply, setSendingReply] = useState(false);
+	const [sendStatus, setSendStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 	const [viewMode, setViewMode] = useState<'chat' | 'thread'>('chat');
 	const [generatingAutoReply, setGeneratingAutoReply] = useState(false);
 	const [autoReplyContent, setAutoReplyContent] = useState<string>('');
@@ -213,17 +215,25 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 			if (result.ok) {
 				console.log('✅ Reply sent successfully!');
 				setReplyText('');
+				setSendStatus({ type: 'success', message: 'Reply sent successfully.' });
 			} else {
 				console.error('❌ Failed to send reply:', result.error);
-				alert(`Failed to send reply: ${result.error}`);
+				setSendStatus({ type: 'error', message: result.error || 'Failed to send reply.' });
 			}
 		} catch (error) {
 			console.error('❌ Error sending reply:', error);
-			alert(`Error sending reply: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			setSendStatus({ type: 'error', message: error instanceof Error ? error.message : 'Unknown error' });
 		} finally {
 			setSendingReply(false);
 		}
 	};
+
+	// Auto-clear status message after a short delay
+	useEffect(() => {
+		if (!sendStatus) return;
+		const t = setTimeout(() => setSendStatus(null), 3000);
+		return () => clearTimeout(t);
+	}, [sendStatus]);
 
 	const formatDate = (dateString: string) => {
 		const date = new Date(dateString);
@@ -415,6 +425,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 
 			{/* Reply Input */}
 			<div className="p-4 border-t border-slate-200 bg-slate-50">
+			<MessageDisplay error={sendStatus?.type === 'error' ? sendStatus.message : ''} success={sendStatus?.type === 'success' ? sendStatus.message : ''} />
 			<div className="flex items-center justify-between mb-3">
 				{/* Generate Reply Button */}
 				<div className="flex items-center gap-2 mb-3">

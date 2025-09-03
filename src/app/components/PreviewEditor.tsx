@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Send, Eye, Code } from 'lucide-react';
 
 interface PreviewEditorProps {
@@ -25,29 +25,47 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 	const [editedSubject, setEditedSubject] = useState(preview.subject);
 	const [editedHtml, setEditedHtml] = useState(preview.html);
 	const [sending, setSending] = useState(false);
-	const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+	const [viewMode, setViewMode] = useState<'edit' | 'preview'>('preview');
+
+	// Uncontrolled contentEditable to avoid caret jump
+	const editorRef = useRef<HTMLDivElement | null>(null);
+	const liveHtmlRef = useRef<string>(editedHtml);
+
+	useEffect(() => {
+		// Sync preview editor contents when switching to preview or when HTML changes externally
+		if (viewMode === 'preview' && editorRef.current) {
+			// Only update DOM if content differs (prevents caret move)
+			if (editorRef.current.innerHTML !== editedHtml) {
+				editorRef.current.innerHTML = editedHtml;
+			}
+			liveHtmlRef.current = editorRef.current.innerHTML;
+		}
+	}, [viewMode, editedHtml]);
 
 	const handleSend = async () => {
 		setSending(true);
 		try {
-			// Call the send API with the edited content
+			// Commit any in-progress edits from preview before sending
+			if (viewMode === 'preview' && editorRef.current) {
+				liveHtmlRef.current = editorRef.current.innerHTML;
+				setEditedHtml(liveHtmlRef.current);
+			}
+
 			const result = await onSendEmail({
 				emails: recipients,
 				subject: editedSubject,
-				brief: editedHtml,
+				brief: viewMode === 'preview' ? liveHtmlRef.current : editedHtml,
 				format: 'formal',
 				action: 'send'
 			});
 			
 			if (result.ok) {
-				onSend(); // Close the editor and show success
+				onSend();
 			} else {
 				console.error('Failed to send email:', result.error);
-				// You could add error handling here
 			}
 		} catch (error) {
 			console.error('Error sending email:', error);
-			// You could add error handling here
 		} finally {
 			setSending(false);
 		}
@@ -59,15 +77,7 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 			<div className="p-4 border-b border-slate-200 bg-gradient-to-r from-green-600 to-green-700">
 				<div className="flex items-center justify-between">
 					<h2 className="text-lg font-semibold text-white">Edit & Send Email</h2>
-					<div className="flex items-center gap-2">
-						<button
-							onClick={onBack}
-							className="p-2 hover:bg-green-500 rounded-lg transition-colors text-white hover:text-white"
-							title="Back to compose"
-						>
-							<ArrowLeft className="w-4 h-4" />
-						</button>
-					</div>
+					
 				</div>
 			</div>
 
@@ -92,7 +102,19 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 						<label className="block text-sm font-medium text-slate-700">
 							Email Content
 						</label>
+						
 						<div className="flex gap-2">
+						<button
+								onClick={() => setViewMode('preview')}
+								className={`px-3 py-1 text-xs rounded-md transition-colors ${
+									viewMode === 'preview' 
+										? 'bg-green-100 text-green-700 border border-green-300' 
+										: 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+								}`}
+							>
+								<Eye className="w-3 h-3 inline mr-1" />
+								Preview
+							</button>
 							<button
 								onClick={() => setViewMode('edit')}
 								className={`px-3 py-1 text-xs rounded-md transition-colors ${
@@ -104,17 +126,7 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 								<Code className="w-3 h-3 inline mr-1" />
 								Edit HTML
 							</button>
-							<button
-								onClick={() => setViewMode('preview')}
-								className={`px-3 py-1 text-xs rounded-md transition-colors ${
-									viewMode === 'preview' 
-										? 'bg-green-100 text-green-700 border border-green-300' 
-										: 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-								}`}
-							>
-								<Eye className="w-3 h-3 inline mr-1" />
-								Preview
-							</button>
+							
 						</div>
 					</div>
 					
@@ -128,12 +140,18 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 						/>
 					) : (
 						<div className="border border-slate-300 rounded-lg p-4 bg-white min-h-[300px]">
-							<div 
-								className="prose prose-sm max-w-none"
-								style={{
-									color: "black"
+							<div
+								ref={editorRef}
+								className="prose prose-sm max-w-none outline-none"
+								style={{ color: 'black' }}
+								contentEditable
+								suppressContentEditableWarning
+								onInput={() => {
+									if (editorRef.current) {
+										liveHtmlRef.current = editorRef.current.innerHTML;
+									}
 								}}
-								dangerouslySetInnerHTML={{ __html: editedHtml }}
+								onBlur={() => setEditedHtml(liveHtmlRef.current)}
 							/>
 						</div>
 					)}
@@ -147,6 +165,18 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 					>
 						<ArrowLeft className="w-4 h-4" />
 						Back to Compose
+					</button>
+					<button
+						onClick={handleSend}
+						disabled={sending}
+						className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 shadow-sm"
+					>
+						{sending ? (
+							<Eye className="w-4 h-4 animate-spin" />
+						) : (
+							<Send className="w-4 h-4" />
+						)}
+						Send Email
 					</button>
 				</div>
 			</div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, Eye, Loader2 } from 'lucide-react';
+import { Eye, Loader2 } from 'lucide-react';
 
 interface SendEmailTabProps {
 	onSendEmail: (data: {
@@ -42,49 +42,19 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 				action: 'preview'
 			});
 
+			// Persist recipients for PreviewEditor to use
+			sessionStorage.setItem('composeRecipients', JSON.stringify(
+				recipients.split(/[\,\n]/).map(s => s.trim()).filter(Boolean)
+			));
+
 			if (result.ok && result.preview) {
 				setPreview(result.preview);
-				setSuccess('Preview generated successfully!');
+				setSuccess('Preview generated successfully! Edit and send on the right.');
 			} else {
 				setError(result.error || 'Failed to generate preview');
 			}
 		} catch (err) {
 			setError((err as Error).message || 'Failed to generate preview');
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const handleSend = async () => {
-		if (!recipients || !subject || !brief) {
-			setError('Please fill in all fields');
-			return;
-		}
-
-		setLoading(true);
-		setError('');
-		setSuccess('');
-
-		try {
-			const result = await onSendEmail({
-				emails: recipients.split(/[\,\n]/).map(s => s.trim()).filter(Boolean),
-				subject,
-				brief,
-				format,
-				action: 'send'
-			});
-
-			if (result.ok) {
-				setSuccess('Email sent successfully!');
-				setRecipients('');
-				setSubject('');
-				setBrief('');
-				setPreview(null);
-			} else {
-				setError(result.error || 'Failed to send email');
-			}
-		} catch (err) {
-			setError((err as Error).message || 'Failed to send email');
 		} finally {
 			setLoading(false);
 		}
@@ -143,7 +113,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 
 				{/* Format */}
 				<div>
-					<label className="block text sm font-medium text-slate-700 mb-2">
+					<label className="block text-sm font-medium text-slate-700 mb-2">
 						Tone
 					</label>
 					<select
@@ -172,20 +142,6 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 						)}
 						Generate
 					</button>
-					{preview && (
-						<button
-							onClick={handleSend}
-							disabled={loading}
-							className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 shadow-sm"
-						>
-							{loading ? (
-								<Loader2 className="w-4 h-4 animate-spin" />
-							) : (
-								<Send className="w-4 h-4" />
-							)}
-							Send Email
-						</button>
-					)}
 				</div>
 
 				{/* Messages */}
