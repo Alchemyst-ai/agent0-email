@@ -4,6 +4,8 @@ import { sendEmailSchema } from "@/lib/schemas";
 import { createOpenAI } from "@/lib/ai";
 import { sendEmailWithEmailEngine } from "@/lib/email-engine";
 import { getEmailDatabase } from "@/lib/email-db";
+import { AuthService } from "@/lib/auth";
+import { EmailCredentialsDatabase } from "@/lib/email-credentials-db";
 
 export async function POST(req: NextRequest) {
 	try {
@@ -67,7 +69,18 @@ export async function POST(req: NextRequest) {
 			}, { status: 500 });
 		}
 		
-		// Use EmailEngine
+		// Resolve active account for this user
+		let fromAccount = env.EMAIL_ENGINE_ACCOUNT;
+		try {
+			const user = await AuthService.getCurrentUser(req);
+			if (user) {
+				const db = EmailCredentialsDatabase.getInstance();
+				const active = await db.getActiveCredentials(user._id.toString());
+				if (active?.emailId) fromAccount = active.emailId;
+			}
+		} catch {}
+
+		// Use EmailEngine with selected account
 		const results = await sendEmailWithEmailEngine(
 			{ 
 				to: emails, 
@@ -76,7 +89,7 @@ export async function POST(req: NextRequest) {
 				text: text,
 				reference: reference
 			},
-			env.EMAIL_ENGINE_ACCOUNT
+			fromAccount
 		);
 
 		// Store email in MongoDB after successful send
@@ -90,7 +103,7 @@ export async function POST(req: NextRequest) {
 			await emailDb.createEmail({
 				messageId,
 				threadId,
-				from: env.EMAIL_ENGINE_ACCOUNT,
+				from: fromAccount,
 				to: Array.isArray(emails) ? emails : [emails],
 				subject: finalSubject,
 				content: { html, text },

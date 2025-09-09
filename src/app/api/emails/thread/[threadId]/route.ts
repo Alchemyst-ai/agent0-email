@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getThreadMessages } from "@/lib/email-engine";
+import { AuthService } from "@/lib/auth";
+import { EmailCredentialsDatabase } from "@/lib/email-credentials-db";
 
 export async function GET(
 	req: NextRequest,
@@ -17,7 +19,17 @@ export async function GET(
 		
 		console.log('Fetching thread messages for threadId:', threadId);
 		
-		const messages = await getThreadMessages(threadId);
+		let accountEmail: string | undefined = undefined;
+		try {
+			const user = await AuthService.getCurrentUser(req);
+			if (user) {
+				const db = EmailCredentialsDatabase.getInstance();
+				const active = await db.getActiveCredentials(user._id.toString());
+				accountEmail = active?.emailId || undefined;
+			}
+		} catch {}
+		
+		const messages = await getThreadMessages(threadId, accountEmail);
 		
 		console.log('Thread messages response:', {
 			count: messages.length,

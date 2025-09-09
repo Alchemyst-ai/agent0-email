@@ -119,9 +119,10 @@ export type EmailContentResponse = {
 	hasMore?: boolean;
 };
 
-export async function getInboxMessages(pageSize: number = 20): Promise<EmailListResponse> {
+export async function getInboxMessages(pageSize: number = 20, accountEmail?: string): Promise<EmailListResponse> {
 	const env = getServerEnv();
-	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${env.EMAIL_ENGINE_ACCOUNT}/messages?path=\\All&pageSize=${pageSize}&access_token=${env.EMAIL_ENGINE_API_KEY}`;
+	const account = accountEmail || env.EMAIL_ENGINE_ACCOUNT;
+	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${account}/messages?path=\\All&pageSize=${pageSize}&access_token=${env.EMAIL_ENGINE_API_KEY}`;
 	
 	console.log('Fetching inbox messages from:', url);
 	
@@ -139,9 +140,10 @@ export async function getInboxMessages(pageSize: number = 20): Promise<EmailList
 	return data;
 }
 
-export async function searchMessagesByThreadId(threadId: string): Promise<EmailSearchResponse> {
+export async function searchMessagesByThreadId(threadId: string, accountEmail?: string): Promise<EmailSearchResponse> {
 	const env = getServerEnv();
-	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${env.EMAIL_ENGINE_ACCOUNT}/search?path=\\All&access_token=${env.EMAIL_ENGINE_API_KEY}`;
+	const account = accountEmail || env.EMAIL_ENGINE_ACCOUNT;
+	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${account}/search?path=\\All&access_token=${env.EMAIL_ENGINE_API_KEY}`;
 	
 	console.log('Searching for thread messages:', { threadId, url });
 	
@@ -173,9 +175,10 @@ export async function searchMessagesByThreadId(threadId: string): Promise<EmailS
 	return data;
 }
 
-export async function getMessageContent(emailEngineId: string): Promise<EmailContentResponse> {
+export async function getMessageContent(emailEngineId: string, accountEmail?: string): Promise<EmailContentResponse> {
 	const env = getServerEnv();
-	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${env.EMAIL_ENGINE_ACCOUNT}/text/${emailEngineId}?access_token=${env.EMAIL_ENGINE_API_KEY}`;
+	const account = accountEmail || env.EMAIL_ENGINE_ACCOUNT;
+	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${account}/text/${emailEngineId}?access_token=${env.EMAIL_ENGINE_API_KEY}`;
 	
 	console.log('Fetching message content for text ID:', emailEngineId);
 	
@@ -199,10 +202,10 @@ export async function getMessageContent(emailEngineId: string): Promise<EmailCon
 	return data;
 }
 
-export async function getThreadMessages(threadId: string): Promise<EmailMessage[]> {
+export async function getThreadMessages(threadId: string, accountEmail?: string): Promise<EmailMessage[]> {
 	try {
 		// First, search for messages in the thread
-		const searchResponse = await searchMessagesByThreadId(threadId);
+		const searchResponse = await searchMessagesByThreadId(threadId, accountEmail);
 		
 		// Return messages without content - content will be loaded on demand
 		const messages = searchResponse.messages.map(message => ({
@@ -219,9 +222,9 @@ export async function getThreadMessages(threadId: string): Promise<EmailMessage[
 	}
 }
 
-export async function getMessageContentOnDemand(emailEngineId: string): Promise<{ html?: string; textContent?: string }> {
+export async function getMessageContentOnDemand(emailEngineId: string, accountEmail?: string): Promise<{ html?: string; textContent?: string }> {
 	try {
-		const content = await getMessageContent(emailEngineId);
+		const content = await getMessageContent(emailEngineId, accountEmail);
 		return {
 			html: content.html,
 			textContent: content.plain,

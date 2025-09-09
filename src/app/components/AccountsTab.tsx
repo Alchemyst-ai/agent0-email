@@ -33,6 +33,10 @@ export default function AccountsTab() {
 
     if (!result.success) {
       alert(`Failed to delete account: ${result.error}`);
+    } else {
+      try {
+        window.dispatchEvent(new CustomEvent('active-account-changed'));
+      } catch {}
     }
   };
 
@@ -43,6 +47,10 @@ export default function AccountsTab() {
 
     if (!result.success) {
       alert(`Failed to switch account: ${result.error}`);
+    } else {
+      try {
+        window.dispatchEvent(new CustomEvent('active-account-changed'));
+      } catch {}
     }
   };
 
@@ -131,7 +139,6 @@ export default function AccountsTab() {
       <div className="flex-1 overflow-y-auto p-4">
         {accounts.length === 0 ? (
           <div className="text-center py-12">
-            <Mail className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No email accounts</h3>
             <p className="text-gray-600 mb-6">Add your first email account to get started</p>
             <Button
@@ -151,45 +158,38 @@ export default function AccountsTab() {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="text-2xl">
-                      {getProviderIcon(account.provider)}
-                    </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-medium text-gray-900">
                           {account.emailId}
                         </h3>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(account)}`}>
-                          {getStatusText(account)}
-                        </span>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span className="capitalize">{account.provider}</span>
                         <span>•</span>
                         <span>Added {new Date(account.createdAt).toLocaleDateString()}</span>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
                     {getStatusIcon(account)}
                     
-                    {!account.isActive && (
-                      <Button
-                        onClick={() => handleSwitch(account.id)}
-                        disabled={switchingId === account.id}
-                        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors disabled:opacity-50"
-                        title="Set as active account"
-                      >
-                        {switchingId === account.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
+                    <Button
+                      onClick={() => { if (!account.isActive) handleSwitch(account.id) }}
+                      disabled={account.isActive || switchingId === account.id}
+                      className={`${account.isActive ? 'bg-gray-100 text-gray-600' : 'bg-blue-600 text-white hover:bg-blue-700'} px-3 py-2 rounded-md transition-colors disabled:opacity-60`}
+                      title={account.isActive ? 'Active account' : 'Set as active account'}
+                    >
+                      {switchingId === account.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <div className="flex items-center gap-2">
                           <Settings className="w-4 h-4" />
-                        )}
-                      </Button>
-                    )}
+                          <span className="text-sm font-medium">{account.isActive ? 'Active' : 'Set Active'}</span>
+                        </div>
+                      )}
+                    </Button>
 
                     <Button
+                      variant="ghost"
                       onClick={() => handleDelete(account.id)}
                       disabled={deletingId === account.id}
                       className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
@@ -201,6 +201,8 @@ export default function AccountsTab() {
                         <Trash2 className="w-4 h-4" />
                       )}
                     </Button>
+                  </div>
+                    </div>
                   </div>
                 </div>
 

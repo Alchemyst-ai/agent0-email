@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getInboxMessages } from "@/lib/email-engine";
 import { getServerEnv } from "@/lib/env";
+import { AuthService } from "@/lib/auth";
+import { EmailCredentialsDatabase } from "@/lib/email-credentials-db";
 
 export async function GET(req: NextRequest) {
 	try {
@@ -15,7 +17,18 @@ export async function GET(req: NextRequest) {
 			apiKeyLength: env.EMAIL_ENGINE_API_KEY?.length || 0
 		});
 		
-		const response = await getInboxMessages(pageSize);
+		// Determine active account for the authenticated user
+		let accountEmail: string | undefined = undefined;
+		try {
+			const user = await AuthService.getCurrentUser(req);
+			if (user) {
+				const db = EmailCredentialsDatabase.getInstance();
+				const active = await db.getActiveCredentials(user._id.toString());
+				accountEmail = active?.emailId || undefined;
+			}
+		} catch {}
+
+		const response = await getInboxMessages(pageSize, accountEmail);
 		
 		return NextResponse.json(response);
 	} catch (error) {

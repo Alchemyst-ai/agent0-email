@@ -59,6 +59,18 @@ export default function Home() {
 		}
 	}, [user]);
 
+	// Refresh data when active account changes from AccountsTab
+	useEffect(() => {
+		const handler = () => {
+			setSelectedEmail(null);
+			setThreadMessages([]);
+			checkEmails();
+			getAccountInfo();
+		};
+		window.addEventListener('active-account-changed', handler);
+		return () => window.removeEventListener('active-account-changed', handler);
+	}, []);
+
 	const handleEmailClick = async (email: EmailMessage) => {
 		setSelectedEmail(email);
 		try {

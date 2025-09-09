@@ -2,6 +2,8 @@
 
 import { Mail, Send, History, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAccounts } from "@/lib/accounts-context";
 
 interface TopbarProps {
   activeTab: string;
@@ -16,6 +18,9 @@ export default function Topbar({ activeTab, setActiveTab }: TopbarProps) {
     { id: "accounts", label: "Accounts", icon: Settings },
   ];
 
+  const { accounts, switchActiveAccount } = useAccounts();
+  const activeAccount = accounts.find(a => a.isActive);
+
   return (
     <div className="w-full border-b border-slate-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="max-w-[1400px]">
@@ -25,7 +30,7 @@ export default function Topbar({ activeTab, setActiveTab }: TopbarProps) {
         <div className="p-4 w-96 flex items-center justify-center border-b border-slate-200 bg-gradient-to-r from-blue-600 to-blue-700 ">
           <h1 className="text-xl font-semibold text-white">Email Agent</h1>
         </div>
-        <div className="flex items-center gap-2 px-16">
+        <div className="flex items-center gap-2 px-4 py-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -45,6 +50,27 @@ export default function Topbar({ activeTab, setActiveTab }: TopbarProps) {
               </Button>
             );
           })}
+        </div>
+        <div className="flex items-center gap-2">
+            <Select
+              value={activeAccount?.id || ""}
+              onValueChange={async (val) => {
+                if (!val || val === activeAccount?.id) return;
+                await switchActiveAccount(val);
+                try { window.dispatchEvent(new CustomEvent('active-account-changed')); } catch {}
+              }}
+            >
+              <SelectTrigger className="h-8 bg-white/10  border-white/30 focus-visible:ring-white/50">
+                <SelectValue placeholder={activeAccount?.emailId || "Select account"} />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts.map(acc => (
+                  <SelectItem key={acc.id} value={acc.id}>
+                    {acc.emailId}{acc.isActive ? " (active)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
