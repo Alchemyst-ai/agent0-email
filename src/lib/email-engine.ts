@@ -338,3 +338,24 @@ export async function sendEmailWithEmailEngine(input: SendEmailInput, fromEmail:
 
 	return results;
 }
+
+// Delete an EmailEngine account by email identifier
+export async function deleteEmailEngineAccount(accountEmail: string): Promise<{ ok: boolean; status: number; message?: string }> {
+    const env = getServerEnv();
+    const baseUrl = env.EMAIL_ENGINE_BASE_URL;
+    const apiKey = env.EMAIL_ENGINE_API_KEY;
+    if (!baseUrl || !apiKey) {
+        throw new Error("EMAIL_ENGINE_BASE_URL and EMAIL_ENGINE_API_KEY are required for EmailEngine");
+    }
+    const url = `${baseUrl}/v1/account/${encodeURIComponent(accountEmail)}?access_token=${apiKey}`;
+    try {
+        const response = await fetch(url, { method: 'DELETE' });
+        if (!response.ok) {
+            const text = await response.text().catch(() => '');
+            return { ok: false, status: response.status, message: text || response.statusText };
+        }
+        return { ok: true, status: response.status };
+    } catch (error) {
+        return { ok: false, status: 0, message: (error as Error)?.message };
+    }
+}

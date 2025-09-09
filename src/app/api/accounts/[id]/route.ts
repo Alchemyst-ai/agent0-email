@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuthService } from '@/lib/auth';
 import { EmailCredentialsDatabase } from '@/lib/email-credentials-db';
 import { connectToDatabase } from '@/lib/mongodb';
+import { deleteEmailEngineAccount } from '@/lib/email-engine';
 
 export async function GET(
   request: NextRequest,
@@ -182,6 +183,18 @@ export async function DELETE(
         { error: 'Failed to delete credentials' },
         { status: 500 }
       );
+    }
+
+    // Attempt to delete the corresponding account in EmailEngine as well,
+    try {
+      if (credentials.emailId) {
+        const ee = await deleteEmailEngineAccount(credentials.emailId);
+        if (!ee.ok) {
+          console.warn('EmailEngine account delete failed:', ee.status, ee.message);
+        }
+      }
+    } catch (err) {
+      console.warn('EmailEngine delete threw:', (err as Error)?.message);
     }
 
     return NextResponse.json({
