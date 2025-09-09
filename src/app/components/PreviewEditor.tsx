@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Send, Eye, Code } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface PreviewEditorProps {
 	preview: {
@@ -104,7 +105,7 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 						</label>
 						
 						<div className="flex gap-2">
-						<button
+						<Button
 								onClick={() => setViewMode('preview')}
 								className={`px-3 py-1 text-xs rounded-md transition-colors ${
 									viewMode === 'preview' 
@@ -114,8 +115,8 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 							>
 								<Eye className="w-3 h-3 inline mr-1" />
 								Preview
-							</button>
-							<button
+							</Button>
+							<Button
 								onClick={() => setViewMode('edit')}
 								className={`px-3 py-1 text-xs rounded-md transition-colors ${
 									viewMode === 'edit' 
@@ -125,7 +126,7 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 							>
 								<Code className="w-3 h-3 inline mr-1" />
 								Edit HTML
-							</button>
+							</Button>
 							
 						</div>
 					</div>
@@ -159,14 +160,14 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 
 				{/* Action Buttons */}
 				<div className="flex gap-2 pt-4 border-t border-slate-200">
-					<button
+					<Button
 						onClick={onBack}
 						className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors shadow-sm"
 					>
 						<ArrowLeft className="w-4 h-4" />
 						Back to Compose
-					</button>
-					<button
+					</Button>
+					<Button
 						onClick={handleSend}
 						disabled={sending}
 						className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 shadow-sm"
@@ -177,7 +178,7 @@ export default function PreviewEditor({ preview, onSend, onBack, onSendEmail, re
 							<Send className="w-4 h-4" />
 						)}
 						Send Email
-					</button>
+					</Button>
 				</div>
 			</div>
 		</div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { EmailMessage } from '@/lib/email-engine';
 import { ArrowLeft, Send, Loader2, MessageSquare, List } from 'lucide-react';
 import MessageDisplay from './MessageDisplay';
+import { Button } from '@/components/ui/button';
 
 interface ThreadViewerProps {
 	email: EmailMessage;
@@ -381,12 +382,13 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 			{/* Header */}
 			<div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
 				<div className="flex items-center gap-3">
-					<button
+					<Button
+						variant="ghost"
 						onClick={onBack}
 						className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600 hover:text-slate-800"
 					>
 						<ArrowLeft className="w-5 h-5" />
-					</button>
+					</Button>
 					<div>
 						<h2 className="font-semibold text-slate-800">{email.subject}</h2>
 						<p className="text-sm text-slate-600">
@@ -395,7 +397,8 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 					</div>
 				</div>
 				<div className="flex items-center gap-1 bg-white rounded-lg p-1 shadow-sm border border-slate-200">
-					<button
+					<Button
+						variant="ghost"
 						onClick={() => setViewMode('chat')}
 						className={`p-2 rounded-md transition-colors ${
 							viewMode === 'chat' 
@@ -405,8 +408,9 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 						title="Chat View"
 					>
 						<MessageSquare className="w-4 h-4" />
-					</button>
-					<button
+					</Button>
+					<Button
+						variant="ghost"
 						onClick={() => setViewMode('thread')}
 						className={`p-2 rounded-md transition-colors ${
 							viewMode === 'thread' 
@@ -416,7 +420,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 						title="Thread View"
 					>
 						<List className="w-4 h-4" />
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -429,7 +433,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 			<div className="flex items-center justify-between mb-3">
 				{/* Generate Reply Button */}
 				<div className="flex items-center gap-2 mb-3">
-					<button
+					<Button
 						onClick={() => generateAutoReply(false)} // Manual mode
 						disabled={generatingAutoReply}
 						className="p-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors"
@@ -441,7 +445,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 							<MessageSquare className="w-4 h-4" />
 						)}
 						<span className="ml-1">Generate Reply</span>
-					</button>
+					</Button>
 				</div>
 			</div>
 				
@@ -459,7 +463,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 							}
 						}}
 					/>
-					<button 
+					<Button 
 						onClick={handleSendReply}
 						disabled={sendingReply || !replyText.trim()}
 						className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
@@ -469,7 +473,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 						) : (
 							<Send className="w-4 h-4" />
 						)}
-					</button>
+					</Button>
 				</div>
 			</div>
 		</div>

@@ -1,8 +1,11 @@
 "use client"
 
 import type { EmailMessage } from "@/lib/email-engine"
+import type { EmailRecord } from "@/lib/email-db"
 import InboxTab from "./InboxTab"
 import SendEmailTab from "./SendEmailTab"
+import SentEmailsTab from "./SentEmailsTab"
+import AccountsTab from "./AccountsTab"
 import { Mail } from "lucide-react"
 
 interface TabContentProps {
@@ -65,11 +68,20 @@ export default function TabContent({
     }
   }
 
+  const handleSentEmailClick = (email: EmailRecord) => {
+    // For sent emails, we can show details but they're not editable
+    console.log('Sent email clicked:', email);
+  }
+
   switch (activeTab) {
     case "inbox":
       return <InboxTab emails={emails} selectedEmail={selectedEmail} onEmailClick={onEmailClick} loading={loading} />
     case "send":
       return <SendEmailTab onSendEmail={handleSendEmail} />
+    case "sent":
+      return <SentEmailsTab selectedEmail={null} onEmailClick={handleSentEmailClick} />
+    case "accounts":
+      return <AccountsTab />
     default:
       return (
         <div className="p-6 text-center">

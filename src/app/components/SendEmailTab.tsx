@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Eye, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SendEmailTabProps {
 	onSendEmail: (data: {
@@ -63,8 +64,8 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 	return (
 		<div className="h-full flex flex-col">
 			{/* Header */}
-			<div className="p-4 border-b border-slate-200 bg-gradient-to-r from-blue-600 to-blue-700">
-				<h2 className="text-lg font-semibold text-white">Compose Email</h2>
+			<div className="p-4 border-b border-slate-200 bg-gradient-to-r">
+				<h2 className="text-lg font-semibold">Compose Email</h2>
 			</div>
 
 			{/* Form */}
@@ -130,7 +131,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 
 				{/* Action Buttons */}
 				<div className="flex gap-2 pt-4">
-					<button
+					<Button
 						onClick={handlePreview}
 						disabled={loading}
 						className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 shadow-sm"
@@ -141,7 +142,7 @@ export default function SendEmailTab({ onSendEmail }: SendEmailTabProps) {
 							<Eye className="w-4 h-4" />
 						)}
 						Generate
-					</button>
+					</Button>
 				</div>
 
 				{/* Messages */}

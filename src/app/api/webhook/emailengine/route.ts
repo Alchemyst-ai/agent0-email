@@ -1,18 +1,14 @@
-import { getServerEnv } from "@/lib/env";
-import { NextRequest, NextResponse } from "next/server";
-import { createOpenAI } from "@/lib/ai";
-import { searchMessagesByThreadId, getMessageContentOnDemand, sendEmailWithEmailEngine } from "@/lib/email-engine";
-import { getAutoReplyEnabled } from "@/lib/settings";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerEnv } from '@/lib/env';
+import { createOpenAI } from '@/lib/ai';
+import { searchMessagesByThreadId, getMessageContentOnDemand, sendEmailWithEmailEngine } from '@/lib/email-engine';
+import { getAutoReplyEnabled } from '@/lib/settings';
+import { getEmailDatabase } from '@/lib/email-db';
 
-const handler = async (req: NextRequest) => {
+export async function handler(req: NextRequest) {
   try {
     const reqBody = await req.json();
-    console.log('THE EVENTS', reqBody.event);
-
-    if (reqBody.event === 'messageFailed') {
-      const emailAccount = reqBody.data.account;
-      console.log('❌ Email failed for account:', emailAccount);
-    }
+    console.log('Webhook received:', reqBody.event);
 
     if (reqBody.event === 'messageNew') {
       const env = getServerEnv();
@@ -87,6 +83,41 @@ const handler = async (req: NextRequest) => {
                 env.EMAIL_ENGINE_ACCOUNT
               );
               console.log('Auto-reply send results:', results);
+
+              // 6) Store auto-reply in MongoDB
+              try {
+                const emailDb = await getEmailDatabase();
+                
+                // Extract message ID from results
+                const messageId = results?.[0]?.id || `auto-reply-${Date.now()}`;
+                
+                await emailDb.createEmail({
+                  messageId,
+                  threadId,
+                  from: env.EMAIL_ENGINE_ACCOUNT,
+                  to: [fromAddress],
+                  subject: `Re: ${reqBody?.data?.subject || ''}`.trim(),
+                  content: { 
+                    html: `<p>${replyText.replace(/\n/g, '<br/>')}</p>`, 
+                    text: replyText 
+                  },
+                  type: 'auto-reply',
+                  source: 'webhook',
+                  status: 'sent',
+                  metadata: {
+                    aiGenerated: true,
+                    prompt: prompt,
+                    model: 'gpt-4o-mini',
+                    webhookEvent: 'messageNew',
+                    originalMessageId: incomingMessageId,
+                  },
+                });
+                
+                console.log('Auto-reply stored in MongoDB successfully');
+              } catch (dbError) {
+                console.error('Failed to store auto-reply in MongoDB:', dbError);
+                // Don't fail the webhook if DB storage fails
+              }
             }
           } catch (err) {
             console.error('Auto-reply flow failed:', err);
@@ -101,12 +132,40 @@ const handler = async (req: NextRequest) => {
 
     if (reqBody.event === 'trackOpen') {
       console.log('👁️ Email opened:', reqBody.data.messageId);
+      
+      // Update email status in MongoDB
+      try {
+        const emailDb = await getEmailDatabase();
+        await emailDb.updateEmailStatus(reqBody.data.messageId, 'opened');
+      } catch (dbError) {
+        console.error('Failed to update email status in MongoDB:', dbError);
+      }
     }
 
     if (reqBody.event === 'messageSent') {
       console.log('✅ Email sent successfully:', reqBody.data.messageId);
+      
+      // Update email status in MongoDB
+      try {
+        const emailDb = await getEmailDatabase();
+        await emailDb.updateEmailStatus(reqBody.data.messageId, 'delivered');
+      } catch (dbError) {
+        console.error('Failed to update email status in MongoDB:', dbError);
+      }
     }
-  } catch (error) {
+
+    if (reqBody.event === 'messageFailed') {
+      console.log('❌ Email failed to send:', reqBody.data.messageId);
+      
+      // Update email status in MongoDB
+      try {
+        const emailDb = await getEmailDatabase();
+        await emailDb.updateEmailStatus(reqBody.data.messageId, 'failed');
+      } catch (dbError) {
+        console.error('Failed to update email status in MongoDB:', dbError);
+      }
+    }
+  } catch (error: unknown) {
     console.log('Error: ', error);
   }
 

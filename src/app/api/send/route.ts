@@ -3,6 +3,7 @@ import { getServerEnv } from "@/lib/env";
 import { sendEmailSchema } from "@/lib/schemas";
 import { createOpenAI } from "@/lib/ai";
 import { sendEmailWithEmailEngine } from "@/lib/email-engine";
+import { getEmailDatabase } from "@/lib/email-db";
 
 export async function POST(req: NextRequest) {
 	try {
@@ -77,6 +78,38 @@ export async function POST(req: NextRequest) {
 			},
 			env.EMAIL_ENGINE_ACCOUNT
 		);
+
+		// Store email in MongoDB after successful send
+		try {
+			const emailDb = await getEmailDatabase();
+			
+			// Extract message ID from results (assuming EmailEngine returns it)
+			const messageId = results?.[0]?.id || `manual-${Date.now()}`;
+			const threadId = reference?.message ? `reply-${reference.message}` : `new-${Date.now()}`;
+			
+			await emailDb.createEmail({
+				messageId,
+				threadId,
+				from: env.EMAIL_ENGINE_ACCOUNT,
+				to: Array.isArray(emails) ? emails : [emails],
+				subject: finalSubject,
+				content: { html, text },
+				type: reference?.message ? 'manual-reply' : 'sent',
+				source: 'compose',
+				status: 'sent',
+				metadata: {
+					aiGenerated: true,
+					prompt: `${formatInstruction}\n\nSubject: ${subject}\n\nBrief: ${brief}`,
+					model: 'gpt-4o-mini',
+					originalMessageId: reference?.message,
+				},
+			});
+			
+			console.log('Email stored in MongoDB successfully');
+		} catch (dbError) {
+			console.error('Failed to store email in MongoDB:', dbError);
+			// Don't fail the request if DB storage fails
+		}
 
 		return NextResponse.json({ ok: true, results, engine: "emailengine" });
 	} catch (e) {

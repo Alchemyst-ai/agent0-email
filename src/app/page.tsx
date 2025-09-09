@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 import Sidebar from "./components/Sidebar";
 import TabContent from "./components/TabContent";
 import ThreadViewer from "./components/ThreadViewer";
 import PreviewEditor from "./components/PreviewEditor";
+import Topbar from "./components/Topbar";
 import { EmailMessage } from "@/lib/email-engine";
 
 export default function Home() {
+	const router = useRouter();
+	const { user, loading: authLoading } = useAuth();
 	const [activeTab, setActiveTab] = useState("inbox");
 	const [emails, setEmails] = useState<EmailMessage[]>([]);
 	const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
@@ -48,9 +53,11 @@ export default function Home() {
 	};
 
 	useEffect(() => {
-		checkEmails();
-		getAccountInfo();
-	}, []);
+		if (user) {
+			checkEmails();
+			getAccountInfo();
+		}
+	}, [user]);
 
 	const handleEmailClick = async (email: EmailMessage) => {
 		setSelectedEmail(email);
@@ -116,69 +123,84 @@ export default function Home() {
 		}
 	};
 
-	return (
-		<div className="flex h-screen bg-slate-50">
-			{/* Left Sidebar - Inbox */}
-			<div className="w-96 border-r border-slate-200 bg-white shadow-sm">
-				<div className="h-full flex flex-col">
-					{/* Header */}
-					<div className="p-4 border-b border-slate-200 bg-gradient-to-r from-blue-600 to-blue-700">
-						<h1 className="text-xl font-semibold text-white">Email Agent</h1>
-					</div>
-					
-					{/* Tabs */}
-					<Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-					
-					{/* Content */}
-					<div className="flex-1 overflow-hidden">
-						<TabContent 
-							activeTab={activeTab}
-							emails={emails}
-							selectedEmail={selectedEmail}
-							onEmailClick={handleEmailClick}
-							loading={loading}
-							onPreviewGenerated={handlePreviewGenerated}
-							onSendEmail={handleSendEmail}
-						/>
-					</div>
+	// Redirect to auth page if not authenticated
+	if (authLoading) {
+		return (
+			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+					<p className="mt-4 text-gray-600">Loading...</p>
 				</div>
 			</div>
+		);
+	}
 
-			{/* Right Side - Thread Viewer or Preview Editor */}
-			<div className="flex-1 bg-white">
-				{isEditingPreview && previewContent ? (
-					<PreviewEditor
-						preview={previewContent}
-						onSend={() => {
-							setIsEditingPreview(false);
-							setPreviewContent(null);
-						}}
-						onBack={() => {
-							setIsEditingPreview(false);
-							setPreviewContent(null);
-						}}
-						onSendEmail={handleSendEmail}
-						recipients={recipients}
-					/>
-				) : selectedEmail ? (
-					<ThreadViewer
-						email={selectedEmail}
-						messages={threadMessages}
-						onBack={() => {
-							setSelectedEmail(null);
-							setThreadMessages([]);
-						}}
-						accountEmail={accountEmail}
-					/>
-				) : (
-					<div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
-						<div className="text-center">
-							<div className="text-blue-400 text-6xl mb-4">📧</div>
-							<h2 className="text-xl font-medium text-slate-700 mb-2">Select an email</h2>
-							<p className="text-slate-600">Choose an email from the inbox to start reading</p>
+	if (!user) {
+		// Redirect to auth page
+		router.push('/auth');
+		return null;
+	}
+
+	return (
+		<div className="flex h-screen bg-slate-50 flex-col">
+			<Topbar activeTab={activeTab} setActiveTab={setActiveTab} />
+			<div className="flex flex-1 min-h-0">
+				{/* Left Sidebar - Inbox */}
+				<div className="w-96 border-r border-slate-200 bg-white shadow-sm">
+					<div className="h-full flex flex-col min-h-0">
+						{/* Content */}
+						<div className="flex-1 overflow-hidden min-h-0 ">
+							<TabContent 
+								activeTab={activeTab}
+								emails={emails}
+								selectedEmail={selectedEmail}
+								onEmailClick={handleEmailClick}
+								loading={loading}
+								onPreviewGenerated={handlePreviewGenerated}
+								onSendEmail={handleSendEmail}
+							/>
 						</div>
+						{/* Sidebar */}
+						<Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 					</div>
-				)}
+				</div>
+
+				{/* Right Side - Thread Viewer or Preview Editor */}
+				<div className="flex-1 bg-white overflow-hidden min-h-0">
+					{isEditingPreview && previewContent ? (
+						<PreviewEditor
+							preview={previewContent}
+							onSend={() => {
+								setIsEditingPreview(false);
+								setPreviewContent(null);
+							}}
+							onBack={() => {
+								setIsEditingPreview(false);
+								setPreviewContent(null);
+							}}
+							onSendEmail={handleSendEmail}
+							recipients={recipients}
+						/>
+					) : selectedEmail ? (
+						<ThreadViewer
+							email={selectedEmail}
+							messages={threadMessages}
+							onBack={() => {
+								setSelectedEmail(null);
+								setThreadMessages([]);
+							}}
+							accountEmail={accountEmail}
+						/>
+					) : (
+						<div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+							<div className="text-center">
+								<div className="text-blue-400 text-6xl mb-4">📧</div>
+								<h2 className="text-xl font-medium text-slate-700 mb-2">Select an email</h2>
+								<p className="text-slate-600">Choose an email from the inbox to start reading</p>
+							</div>
+						</div>
+					)}
+				</div>
 			</div>
 		</div>
 	);

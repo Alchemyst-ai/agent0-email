@@ -4,6 +4,7 @@ import { useState } from "react";
 import AiRepliesTab from "./AiRepliesTab";
 import { Reply, Send, ChevronUp, ChevronDown, EllipsisVertical } from "lucide-react";
 import { EmailMessage } from "@/lib/email-engine";
+import { Button } from '@/components/ui/button';
 
 interface EmailViewerProps {
 	email: EmailMessage;
@@ -178,14 +179,14 @@ export default function EmailViewer({
 						<div className="flex flex-wrap gap-3 py-4 ">
 								{onSendReply && showAiReplies && email.messageId && (
 									<>
-										<button
+										<Button
 										onClick={() => email.messageId && onSendReply(email.messageId, "Thanks!")}
 										disabled={Boolean(sendingReplyId === email.messageId || sendingQuickThanksId === email.messageId)}
 										className="flex-1 sm:flex-none px-2 sm:px-3 py-1 text-xs sm:text-sm bg-gray-100 text-sky-500 font-semibold rounded hover:bg-gray-100/90 disabled:opacity-60 whitespace-nowrap hover:scale-95"
 									>
 										{sendingQuickThanksId === email.messageId ? "Sending..." : "Quick Thanks"}
-									</button>
-									<button
+									</Button>
+									<Button
 											onClick={() => email.messageId && onSendReply(email.messageId)}
 											disabled={Boolean(sendingReplyId === email.messageId || sendingQuickThanksId === email.messageId)}
 											className="flex-1 gap-1 sm:flex-none px-2 sm:px-3 py-1 text-xs sm:text-sm bg-sky-500 text-white rounded hover:bg-sky-600 disabled:opacity-60 font-semibold whitespace-nowrap hover:scale-95"
@@ -193,7 +194,7 @@ export default function EmailViewer({
 											<div className="flex items-center justify-center gap-1">
 												<Send />{sendingReplyId === email.messageId ? "Sending..." : "Send"}
 											</div>
-										</button>
+										</Button>
 									</>
 								)}
 							</div>
@@ -203,13 +204,13 @@ export default function EmailViewer({
 							<div className="my-3">
 								<div className="flex items-center gap-1 px-1 ">
 									<div className="text-md text-gray-200 pr-1 font-medium">Replies</div>
-									<button
+									<Button
 										className="flex items-center gap-2 text-xs text-gray-200 px-2 py-1 bg-gray-800/60 cursor-pointer rounded hover:bg-gray-800/70"
 										onClick={() => setShowThread(!showThread)}
 									>
 										<span className="text-gray-300 ">{showThread ? '' : `${mockReplies.length}`}</span>
 										{showThread ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
-									</button>
+									</Button>
 								</div>
 
 								{showThread && (

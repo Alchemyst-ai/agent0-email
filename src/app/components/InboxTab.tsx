@@ -2,6 +2,7 @@
 
 import { EmailMessage } from '@/lib/email-engine';
 import { RefreshCw, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface InboxTabProps {
 	emails: EmailMessage[];
@@ -94,19 +95,20 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 						<span className="text-sm text-slate-500">
 							{uniqueThreads.length} thread{uniqueThreads.length !== 1 ? 's' : ''}
 						</span>
-						<button
+						<Button
+							variant="ghost"
 							onClick={() => window.location.reload()}
 							className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 hover:text-slate-800"
 							title="Refresh"
 						>
 							<RefreshCw className="w-4 h-4" />
-						</button>
+						</Button>
 					</div>
 				</div>
 			</div>
 
 			{/* Email List */}
-			<div className="flex-1 overflow-y-auto">
+			<div className="flex-1 overflow-y-auto ">
 				{uniqueThreads.map((email) => (
 					<div
 						key={email.threadId}
