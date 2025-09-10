@@ -102,8 +102,8 @@ export default function AccountsTab() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading accounts...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading accounts...</p>
         </div>
       </div>
     );
@@ -112,10 +112,10 @@ export default function AccountsTab() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-4 border-b">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Email Accounts</h2>
-          <p className="text-sm text-gray-600">Manage your email accounts and settings</p>
+          <h2 className="text-lg font-semibold">Email Accounts</h2>
+          <p className="text-sm text-muted-foreground">Manage your email accounts and settings</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -127,7 +127,7 @@ export default function AccountsTab() {
           </Button>
           <Button
             onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2"
           >
             <Plus className="w-4 h-4" />
             Add Account
@@ -139,11 +139,11 @@ export default function AccountsTab() {
       <div className="flex-1 overflow-y-auto p-4">
         {accounts.length === 0 ? (
           <div className="text-center py-12">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No email accounts</h3>
-            <p className="text-gray-600 mb-6">Add your first email account to get started</p>
+            <h3 className="text-lg font-medium mb-2">No email accounts</h3>
+            <p className="text-muted-foreground mb-6">Add your first email account to get started</p>
             <Button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors mx-auto"
+              className="flex items-center gap-2 px-6 py-3 mx-auto"
             >
               <Plus className="w-5 h-5" />
               Add Your First Account
@@ -154,17 +154,17 @@ export default function AccountsTab() {
             {accounts.map((account) => (
               <div
                 key={account.id}
-                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                className="border rounded-lg p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-medium">
                           {account.emailId}
                         </h3>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="capitalize">{account.provider}</span>
                         <span>•</span>
                         <span>Added {new Date(account.createdAt).toLocaleDateString()}</span>
@@ -175,7 +175,8 @@ export default function AccountsTab() {
                     <Button
                       onClick={() => { if (!account.isActive) handleSwitch(account.id) }}
                       disabled={account.isActive || switchingId === account.id}
-                      className={`${account.isActive ? 'bg-gray-100 text-gray-600' : 'bg-blue-600 text-white hover:bg-blue-700'} px-3 py-2 rounded-md transition-colors disabled:opacity-60`}
+                      variant={account.isActive ? "secondary" : "default"}
+                      className="px-3 py-2"
                       title={account.isActive ? 'Active account' : 'Set as active account'}
                     >
                       {switchingId === account.id ? (
@@ -192,7 +193,7 @@ export default function AccountsTab() {
                       variant="ghost"
                       onClick={() => handleDelete(account.id)}
                       disabled={deletingId === account.id}
-                      className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                      className="p-2 text-destructive hover:text-destructive"
                       title="Delete account"
                     >
                       {deletingId === account.id ? (
@@ -207,10 +208,10 @@ export default function AccountsTab() {
                 </div>
 
                 {account.sendingLimitExceeded && (
-                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
                     <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-yellow-600" />
-                      <span className="text-sm text-yellow-800">
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                      <span className="text-sm text-destructive">
                         Sending limit exceeded. Please check your account settings.
                       </span>
                     </div>

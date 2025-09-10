@@ -19,18 +19,18 @@
   scrollbar-width: none;     
 }
 
-/* Ensure input fields have visible text */
+/* Ensure form fields follow theme */
 input, textarea, select {
-  color: #1f2937 !important;
+  color: var(--color-foreground) !important;
 }
 
 input::placeholder, textarea::placeholder {
-  color: #9ca3af !important;
+  color: var(--color-muted-foreground) !important;
 }
 
-/* Ensure contenteditable elements have visible text */
+/* Ensure contenteditable elements follow theme */
 [contenteditable] {
-  color: #1f2937 !important;
+  color: var(--color-foreground) !important;
 }
 
 @theme inline {
@@ -148,3 +148,32 @@ input::placeholder, textarea::placeholder {
     @apply bg-background text-foreground;
   }
 }
+
+/* Theme-aware styles for rendered email HTML blocks */
+.rendered-html {
+  color: var(--color-foreground);
+}
+.rendered-html h1,
+.rendered-html h2,
+.rendered-html h3,
+.rendered-html h4,
+.rendered-html h5,
+.rendered-html h6,
+.rendered-html p,
+.rendered-html li,
+.rendered-html span,
+.rendered-html div,
+.rendered-html a,
+.rendered-html code,
+.rendered-html pre,
+.rendered-html blockquote,
+.rendered-html strong,
+.rendered-html em,
+.rendered-html table,
+.rendered-html th,
+.rendered-html td {
+  color: inherit !important;
+  background: transparent !important;
+}
+.rendered-html a { text-decoration: underline; }
+.rendered-html code, .rendered-html pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }

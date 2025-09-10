@@ -104,7 +104,7 @@ export default function SentEmailsTab({ selectedEmail, onEmailClick }: SentEmail
   return (
     <div className="h-full flex flex-col">
       {/* Header with filters */}
-      <div className="p-4 border-b border-slate-200 bg-gradient-to-r">
+      <div className="p-4 border-b">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Sent Emails</h2>
           <div className="flex gap-2">
@@ -142,7 +142,7 @@ export default function SentEmailsTab({ selectedEmail, onEmailClick }: SentEmail
       {/* Email List */}
       <div className="flex-1 overflow-y-auto">
         {emails.length === 0 ? (
-          <div className="flex items-center justify-center h-64 text-slate-500">
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
             <Mail className="w-8 h-8 mr-2" />
             No sent emails found
           </div>
@@ -151,10 +151,10 @@ export default function SentEmailsTab({ selectedEmail, onEmailClick }: SentEmail
             <div
               key={email._id?.toString() || email.messageId}
               onClick={() => onEmailClick(email)}
-              className={`p-4 border-b border-slate-100 cursor-pointer transition-all duration-200 ${
+              className={`p-4 border-b cursor-pointer transition-all duration-200 ${
                 selectedEmail?._id?.toString() === email._id?.toString()
-                  ? 'bg-blue-50 border-blue-200 shadow-sm'
-                  : 'hover:bg-slate-50 hover:border-slate-200'
+                  ? 'bg-accent'
+                  : 'hover:bg-accent/50'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -167,19 +167,19 @@ export default function SentEmailsTab({ selectedEmail, onEmailClick }: SentEmail
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-slate-800 truncate">
+                    <span className="font-medium truncate">
                       To: {email.to.join(', ')}
                     </span>
-                    <span className="text-xs text-slate-500 whitespace-nowrap ml-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                       {formatDate(email.timestamp)}
                     </span>
                   </div>
 
-                  <div className="text-sm font-medium text-slate-900 mb-1 truncate">
+                  <div className="text-sm font-medium mb-1 truncate">
                     {email.subject}
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className={`px-2 py-1 rounded-full ${
                       email.type === 'auto-reply' ? 'bg-orange-100 text-orange-700' :
                       email.type === 'manual-reply' ? 'bg-blue-100 text-blue-700' :

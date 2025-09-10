@@ -138,7 +138,7 @@ export default function Home() {
 	// Redirect to auth page if not authenticated
 	if (authLoading) {
 		return (
-			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
 					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
 					<p className="mt-4 text-gray-600">Loading...</p>
@@ -154,11 +154,11 @@ export default function Home() {
 	}
 
 	return (
-		<div className="flex h-screen bg-slate-50 flex-col">
+		<div className="flex h-screen flex-col">
 			<Topbar activeTab={activeTab} setActiveTab={setActiveTab} />
 			<div className="flex flex-1 min-h-0">
 				{/* Left Sidebar - Inbox */}
-				<div className="w-96 border-r border-slate-200 bg-white shadow-sm">
+				<div className="w-96 border-r">
 					<div className="h-full flex flex-col min-h-0">
 						{/* Content */}
 						<div className="flex-1 overflow-hidden min-h-0 ">
@@ -178,7 +178,7 @@ export default function Home() {
 				</div>
 
 				{/* Right Side - Thread Viewer or Preview Editor */}
-				<div className="flex-1 bg-white overflow-hidden min-h-0">
+				<div className="flex-1 overflow-hidden min-h-0">
 					{isEditingPreview && previewContent ? (
 						<PreviewEditor
 							preview={previewContent}
@@ -204,11 +204,10 @@ export default function Home() {
 							accountEmail={accountEmail}
 						/>
 					) : (
-						<div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+						<div className="h-full flex items-center justify-center ">
 							<div className="text-center">
-								<div className="text-blue-400 text-6xl mb-4">📧</div>
-								<h2 className="text-xl font-medium text-slate-700 mb-2">Select an email</h2>
-								<p className="text-slate-600">Choose an email from the inbox to start reading</p>
+								<h2 className="text-xl font-medium mb-2">Select an email</h2>
+								<p>Choose an email from the inbox to start reading</p>
 							</div>
 						</div>
 					)}

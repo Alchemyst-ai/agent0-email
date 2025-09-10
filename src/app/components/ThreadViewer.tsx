@@ -265,8 +265,6 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 					<div
 						className={`max-w-[70%] rounded-lg p-3 ${
 							isOwnMessage(message)
-								? 'bg-blue-500 text-white'
-								: 'bg-gray-100 text-gray-900'
 						}`}
 					>
 						{/* Message Header */}
@@ -292,10 +290,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 										</div>
 									) : message.html ? (
 										<div
-  										    className="prose prose-sm max-w-none p-4"
-  											style={ {
-											color: "black"
-													}}
+  										    className="rendered-html max-w-none p-4"
   											dangerouslySetInnerHTML={{ __html: message.html }}
 											/>
 
@@ -326,7 +321,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 				>
 					{/* Message Header */}
 					<div 
-						className="p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+						className="p-4 cursor-pointer transition-colors"
 						onClick={() => toggleMessage(message.id)}
 					>
 						<div className="flex items-center justify-between">
@@ -343,7 +338,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 									{message.subject}
 								</div>
 							</div>
-							<div className="text-gray-400">
+							<div className="">
 								{expandedMessages.has(message.id) ? '▼' : '▶'}
 							</div>
 						</div>
@@ -351,7 +346,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 
 					{/* Message Content */}
 					{expandedMessages.has(message.id) && (
-						<div className="p-4 bg-white border-t border-gray-200">
+						<div className="p-4 border-t">
 							{message.contentLoading ? (
 								<div className="flex items-center justify-center py-4">
 									<Loader2 className="w-4 h-4 animate-spin" />
@@ -359,16 +354,13 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 								</div>
 							) : message.html ? (
 								<div 
-									className="prose prose-sm max-w-none"
-									style={ {
-										color: "black"
-									}}
+									className="rendered-html max-w-none"
 									dangerouslySetInnerHTML={{ __html: message.html }}
 								/>
 							) : message.textContent ? (
 								<div className="whitespace-pre-wrap text-sm">{message.textContent}</div>
 							) : (
-								<div className="text-gray-500 text-sm">No content available</div>
+								<div className="text-sm">No content available</div>
 							)}
 						</div>
 					)}
@@ -378,32 +370,30 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 	);
 
 	return (
-		<div className="h-full flex flex-col bg-white">
+		<div className="h-full flex flex-col">
 			{/* Header */}
-			<div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+			<div className="flex items-center justify-between p-4 border-b">
 				<div className="flex items-center gap-3">
 					<Button
 						variant="ghost"
 						onClick={onBack}
-						className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-600 hover:text-slate-800"
+						className="p-2 rounded-lg transition-colors"
 					>
 						<ArrowLeft className="w-5 h-5" />
 					</Button>
 					<div>
-						<h2 className="font-semibold text-slate-800">{email.subject}</h2>
-						<p className="text-sm text-slate-600">
+						<h2 className="font-semibold">{email.subject}</h2>
+						<p className="text-sm ">
 							{email.from.name} • {formatDate(email.date)}
 						</p>
 					</div>
 				</div>
-				<div className="flex items-center gap-1 bg-white rounded-lg p-1 shadow-sm border border-slate-200">
+				<div className="flex items-center gap-1 rounded-lg p-1 shadow-sm border">
 					<Button
 						variant="ghost"
 						onClick={() => setViewMode('chat')}
 						className={`p-2 rounded-md transition-colors ${
 							viewMode === 'chat' 
-								? 'bg-blue-500 text-white shadow-sm' 
-								: 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
 						}`}
 						title="Chat View"
 					>
@@ -414,8 +404,6 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 						onClick={() => setViewMode('thread')}
 						className={`p-2 rounded-md transition-colors ${
 							viewMode === 'thread' 
-								? 'bg-blue-500 text-white shadow-sm' 
-								: 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
 						}`}
 						title="Thread View"
 					>
@@ -428,15 +416,16 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 			{viewMode === 'chat' ? renderChatView() : renderThreadView()}
 
 			{/* Reply Input */}
-			<div className="p-4 border-t border-slate-200 bg-slate-50">
+			<div className="p-4 border-t ">
 			<MessageDisplay error={sendStatus?.type === 'error' ? sendStatus.message : ''} success={sendStatus?.type === 'success' ? sendStatus.message : ''} />
 			<div className="flex items-center justify-between mb-3">
 				{/* Generate Reply Button */}
 				<div className="flex items-center gap-2 mb-3">
 					<Button
+						variant="ghost"
 						onClick={() => generateAutoReply(false)} // Manual mode
 						disabled={generatingAutoReply}
-						className="p-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+						className="p-2 rounded-md"
 						title="Generate AI reply for this thread"
 					>
 						{generatingAutoReply ? (
@@ -455,7 +444,7 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 						value={replyText}
 						onChange={(e) => setReplyText(e.target.value)}
 						placeholder="Generated reply will appear here. Edit if needed, then click Send."
-						className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-900"
+						className="flex-1 px-3 py-2 border rounded-lg"
 						onKeyPress={(e) => {
 							if (e.key === 'Enter' && !e.shiftKey) {
 								e.preventDefault();
@@ -464,9 +453,10 @@ export default function ThreadViewer({ email, messages, onBack, accountEmail }: 
 						}}
 					/>
 					<Button 
+						variant="ghost"
 						onClick={handleSendReply}
 						disabled={sendingReply || !replyText.trim()}
-						className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+						className="px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
 					>
 						{sendingReply ? (
 							<Loader2 className="w-4 h-4 animate-spin" />

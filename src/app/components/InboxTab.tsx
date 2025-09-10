@@ -65,7 +65,7 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center h-full">
-				<div className="flex items-center gap-2 text-slate-600">
+				<div className="flex items-center gap-2 text-muted-foreground">
 					<Loader2 className="w-5 h-5 animate-spin" />
 					<span>Loading emails...</span>
 				</div>
@@ -77,9 +77,9 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 		return (
 			<div className="flex items-center justify-center h-full">
 				<div className="text-center">
-					<div className="text-slate-300 text-6xl mb-4">📭</div>
-					<h2 className="text-xl font-medium text-slate-600 mb-2">No emails found</h2>
-					<p className="text-slate-500">Your inbox is empty</p>
+					<div className="text-6xl mb-4">📭</div>
+					<h2 className="text-xl font-medium mb-2">No emails found</h2>
+					<p className="text-muted-foreground">Your inbox is empty</p>
 				</div>
 			</div>
 		);
@@ -88,17 +88,17 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 	return (
 		<div className="h-full flex flex-col">
 			{/* Header */}
-			<div className="p-4 border-b border-slate-200 bg-white">
+			<div className="p-4 border-b">
 				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold text-slate-800">Inbox</h2>
+					<h2 className="text-lg font-semibold">Inbox</h2>
 					<div className="flex items-center gap-2">
-						<span className="text-sm text-slate-500">
+						<span className="text-sm text-muted-foreground">
 							{uniqueThreads.length} thread{uniqueThreads.length !== 1 ? 's' : ''}
 						</span>
 						<Button
 							variant="ghost"
 							onClick={() => window.location.reload()}
-							className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 hover:text-slate-800"
+							className="p-2"
 							title="Refresh"
 						>
 							<RefreshCw className="w-4 h-4" />
@@ -113,30 +113,30 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 					<div
 						key={email.threadId}
 						onClick={() => onEmailClick(email)}
-						className={`p-4 border-b border-slate-100 cursor-pointer transition-all duration-200 ${
+						className={`p-4 border-b cursor-pointer transition-all duration-200 ${
 							selectedEmail?.threadId === email.threadId 
-								? 'bg-blue-50 border-blue-200 shadow-sm' 
-								: 'hover:bg-slate-50 hover:border-slate-200'
+								? 'bg-accent' 
+								: 'hover:bg-accent/50'
 						}`}
 					>
 						<div className="flex items-start gap-3">
 							{/* Avatar */}
-							<div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium text-sm shadow-sm">
+							<div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-medium text-sm">
 								{(earliestByThread.get(email.threadId)?.from.name || email.from.name).charAt(0).toUpperCase()}
 							</div>
 
 							{/* Content */}
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center justify-between mb-1">
-									<span className="font-medium text-slate-800 truncate">
+									<span className="font-medium truncate">
 										{earliestByThread.get(email.threadId)?.from.name || email.from.name}
 									</span>
-									<span className="text-xs text-slate-500 whitespace-nowrap ml-2">
+									<span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
 										{formatDate(earliestByThread.get(email.threadId)?.date || email.date)}
 									</span>
 								</div>
 								
-								<div className="text-sm font-medium text-slate-900 mb-1 truncate">
+								<div className="text-sm font-medium mb-1 truncate">
 									{earliestByThread.get(email.threadId)?.subject || email.subject}
 								</div>
 								

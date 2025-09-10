@@ -56,15 +56,15 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 
 
 	return (
-		<div className="flex flex-col w-full bg-white">
-			<div className="p-4 border-t border-slate-200 space-y-4">
-				<label className="flex items-center gap-2 cursor-pointer text-slate-700">
+		<div className="flex flex-col w-full">
+			<div className="p-4 border-t space-y-4">
+				<label className="flex items-center gap-2 cursor-pointer ">
 					<input
 						type="checkbox"
 						checked={autoReplyEnabled}
 						onChange={(e) => handleToggleChange(e.target.checked)}
 						disabled={loadingToggle}
-						className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+						className="w-4 h-4  rounded focus:ring-blue-500 focus:ring-2"
 					/>
 					<span className="text-sm font-medium">Global Auto-Reply</span>
 					{loadingToggle && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
@@ -72,14 +72,14 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 				
 				{/* User Menu */}
 				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-2 text-slate-700">
+					<div className="flex items-center gap-2">
 						<User className="w-4 h-4" />
 						<span className="text-sm font-medium">{user?.name}</span>
 					</div>
 					<Button
 						variant="ghost"
 						onClick={logout}
-						className="flex items-center gap-1 text-slate-600 hover:text-slate-800 transition-colors"
+						className="flex items-center gap-1  hover:text-slate-800 transition-colors"
 						title="Logout"
 					>
 						<LogOut className="w-4 h-4" />
