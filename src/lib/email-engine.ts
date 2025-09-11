@@ -77,6 +77,8 @@ export type EmailListResponse = {
 	nextPageCursor: string | null;
 	prevPageCursor: string | null;
 	messages: EmailMessage[];
+	error?: string;
+	requiresAccountSetup?: boolean;
 };
 
 export type EmailSearchResponse = {
@@ -121,7 +123,21 @@ export type EmailContentResponse = {
 
 export async function getInboxMessages(pageSize: number = 20, accountEmail?: string): Promise<EmailListResponse> {
 	const env = getServerEnv();
-	const account = accountEmail || env.EMAIL_ENGINE_ACCOUNT;
+	const account = accountEmail;
+
+	if (!account) {
+		return {
+			total: 0,
+			page: 1,
+			pages: 0,
+			nextPageCursor: null,
+			prevPageCursor: null,
+			messages: [],
+			error: 'No email account configured',
+			requiresAccountSetup: true
+		};
+	}
+
 	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${account}/messages?path=\\All&pageSize=${pageSize}&access_token=${env.EMAIL_ENGINE_API_KEY}`;
 	
 	console.log('Fetching inbox messages from:', url);
@@ -136,13 +152,12 @@ export async function getInboxMessages(pageSize: number = 20, accountEmail?: str
 	
 	const data = await response.json();
 	console.log('Inbox messages response:', data);
-	
 	return data;
 }
 
 export async function searchMessagesByThreadId(threadId: string, accountEmail?: string): Promise<EmailSearchResponse> {
 	const env = getServerEnv();
-	const account = accountEmail || env.EMAIL_ENGINE_ACCOUNT;
+	const account = accountEmail;
 	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${account}/search?path=\\All&access_token=${env.EMAIL_ENGINE_API_KEY}`;
 	
 	console.log('Searching for thread messages:', { threadId, url });
@@ -177,7 +192,7 @@ export async function searchMessagesByThreadId(threadId: string, accountEmail?: 
 
 export async function getMessageContent(emailEngineId: string, accountEmail?: string): Promise<EmailContentResponse> {
 	const env = getServerEnv();
-	const account = accountEmail || env.EMAIL_ENGINE_ACCOUNT;
+	const account = accountEmail;
 	const url = `${env.EMAIL_ENGINE_BASE_URL}/v1/account/${account}/text/${emailEngineId}?access_token=${env.EMAIL_ENGINE_API_KEY}`;
 	
 	console.log('Fetching message content for text ID:', emailEngineId);

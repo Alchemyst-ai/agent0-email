@@ -9,9 +9,22 @@ interface InboxTabProps {
 	selectedEmail: EmailMessage | null;
 	onEmailClick: (email: EmailMessage) => void;
 	loading: boolean;
+	requiresAccountSetup?: boolean;
+	emailError?: string;
+	onRefresh?: () => void;
+	onNavigateToAccounts?: () => void;
 }
 
-export default function InboxTab({ emails, selectedEmail, onEmailClick, loading }: InboxTabProps) {
+export default function InboxTab({ 
+	emails, 
+	selectedEmail, 
+	onEmailClick, 
+	loading, 
+	requiresAccountSetup, 
+	emailError, 
+	onRefresh,
+	onNavigateToAccounts
+}: InboxTabProps) {
 	const formatDate = (dateString: string) => {
 		const date = new Date(dateString);
 		const now = new Date();
@@ -68,6 +81,62 @@ export default function InboxTab({ emails, selectedEmail, onEmailClick, loading 
 				<div className="flex items-center gap-2 text-muted-foreground">
 					<Loader2 className="w-5 h-5 animate-spin" />
 					<span>Loading emails...</span>
+				</div>
+			</div>
+		);
+	}
+
+	// Show account setup instructions
+	if (requiresAccountSetup) {
+		return (
+			<div className="flex items-center justify-center h-full">
+				<div className="text-center max-w-md mx-auto p-6">
+					<div className="text-6xl mb-4">📧</div>
+					<h2 className="text-xl font-medium mb-2">No Email Account Configured</h2>
+					<p className="text-muted-foreground mb-6">
+						You need to add an email account to start receiving and managing emails.
+					</p>
+					<div className="space-y-3">
+						<Button 
+							onClick={onNavigateToAccounts || (() => window.location.href = '#accounts')}
+							className="w-full"
+						>
+							Add Email Account
+						</Button>
+						{onRefresh && (
+							<Button 
+								variant="outline" 
+								onClick={onRefresh}
+								className="w-full"
+							>
+								<RefreshCw className="w-4 h-4 mr-2" />
+								Refresh
+							</Button>
+						)}
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	// Show error state
+	if (emailError) {
+		return (
+			<div className="flex items-center justify-center h-full">
+				<div className="text-center max-w-md mx-auto p-6">
+					<div className="text-6xl mb-4">⚠️</div>
+					<h2 className="text-xl font-medium mb-2">Error Loading Emails</h2>
+					<p className="text-muted-foreground mb-6">{emailError}</p>
+					{onRefresh && (
+						<Button 
+							variant="outline" 
+							onClick={onRefresh}
+							className="w-full"
+						>
+							<RefreshCw className="w-4 h-4 mr-2" />
+							Try Again
+						</Button>
+					)}
 				</div>
 			</div>
 		);

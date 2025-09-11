@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Send, History, Settings } from "lucide-react";
+import { Mail, Send, History, Settings, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAccounts } from "@/lib/accounts-context";
@@ -17,6 +17,7 @@ export default function Topbar({ activeTab, setActiveTab }: TopbarProps) {
     { id: "inbox", label: "Inbox", icon: Mail },
     { id: "send", label: "Send Email", icon: Send },
     { id: "sent", label: "Sent Emails", icon: History },
+    { id: "auto-reply", label: "Auto Reply", icon: Bot },
     { id: "accounts", label: "Accounts", icon: Settings },
   ];
 

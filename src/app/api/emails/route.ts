@@ -6,18 +6,7 @@ import { EmailCredentialsDatabase } from "@/lib/email-credentials-db";
 
 export async function GET(req: NextRequest) {
 	try {
-		const { searchParams } = new URL(req.url);
-		const pageSize = parseInt(searchParams.get('pageSize') || '20');
-		
-		const env = getServerEnv();
-		console.log('Email Engine Config:', {
-			baseUrl: env.EMAIL_ENGINE_BASE_URL,
-			account: env.EMAIL_ENGINE_ACCOUNT,
-			hasApiKey: !!env.EMAIL_ENGINE_API_KEY,
-			apiKeyLength: env.EMAIL_ENGINE_API_KEY?.length || 0
-		});
-		
-		// Determine active account for the authenticated user
+
 		let accountEmail: string | undefined = undefined;
 		try {
 			const user = await AuthService.getCurrentUser(req);
@@ -27,6 +16,17 @@ export async function GET(req: NextRequest) {
 				accountEmail = active?.emailId || undefined;
 			}
 		} catch {}
+		const { searchParams } = new URL(req.url);
+		const pageSize = parseInt(searchParams.get('pageSize') || '20');
+		
+		const env = getServerEnv();
+		console.log('Email Engine Config:', {
+			baseUrl: env.EMAIL_ENGINE_BASE_URL,
+			account: accountEmail,
+			hasApiKey: !!env.EMAIL_ENGINE_API_KEY,
+			apiKeyLength: env.EMAIL_ENGINE_API_KEY?.length || 0
+		});
+		
 
 		const response = await getInboxMessages(pageSize, accountEmail);
 		

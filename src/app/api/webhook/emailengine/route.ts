@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerEnv } from '@/lib/env';
 import { createOpenAI } from '@/lib/ai';
 import { searchMessagesByThreadId, getMessageContentOnDemand, sendEmailWithEmailEngine } from '@/lib/email-engine';
-import { getAutoReplyEnabled } from '@/lib/settings';
+import { getGlobalAutoReplyEnabled } from '@/lib/settings-db';
 import { getEmailDatabase } from '@/lib/email-db';
+import { EmailCredentialsDatabase } from '@/lib/email-credentials-db';
+import { AutoReplyWhitelistDatabase } from '@/lib/auto-reply-whitelist-db';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export async function handler(req: NextRequest) {
   try {
@@ -18,22 +21,58 @@ export async function handler(req: NextRequest) {
       
       const incomingMessageId = reqBody?.data?.id || reqBody?.data?.messageId;
 
-      if (toAddress && toAddress === env.EMAIL_ENGINE_ACCOUNT) {
+      if (toAddress) {
         console.log('Email new for account:', toAddress);
         console.log('TEH BODY REPLY', reqBody.data);
 
-        if (!getAutoReplyEnabled()) {
-          console.log('Global auto-reply is disabled. Skipping.');
-          return NextResponse.json({ ok: true, skipped: true, reason: 'auto-reply disabled' });
+        // Check if this email is for any of our registered accounts
+        try {
+          await connectToDatabase();
+          const credentialsDb = EmailCredentialsDatabase.getInstance();
+          
+          // Get user ID from the receiving email address
+          const userId = await credentialsDb.getUserIdByEmail(toAddress);
+          if (!userId) {
+            console.log('No user found for email address:', toAddress);
+            return NextResponse.json({ ok: true, skipped: true, reason: 'no user found' });
+          }
+
+          // Check if this is the user's active email account
+          const activeCredentials = await credentialsDb.getActiveCredentials(userId.toString());
+          if (!activeCredentials || activeCredentials.emailId !== toAddress) {
+            console.log('Email not for active account:', toAddress, 'Active:', activeCredentials?.emailId);
+            return NextResponse.json({ ok: true, skipped: true, reason: 'not active account' });
+          }
+
+          console.log('Email is for active account, checking auto-reply settings...');
+
+          const globalEnabled = await getGlobalAutoReplyEnabled();
+          if (!globalEnabled) {
+            console.log('Global auto-reply is disabled. Skipping.');
+            return NextResponse.json({ ok: true, skipped: true, reason: 'auto-reply disabled' });
+          }
+
+          // Check if sender is in whitelist
+          const whitelistDb = AutoReplyWhitelistDatabase.getInstance();
+          const isWhitelisted = await whitelistDb.isEmailWhitelisted(userId, fromAddress);
+          if (!isWhitelisted) {
+            console.log('Sender not in whitelist:', fromAddress);
+            return NextResponse.json({ ok: true, skipped: true, reason: 'sender not whitelisted' });
+          }
+
+          console.log('Sender is whitelisted, proceeding with auto-reply:', fromAddress);
+        } catch (error) {
+          console.error('Error processing email:', error);
+          return NextResponse.json({ ok: true, skipped: true, reason: 'processing error' });
         }
 
         // Prevent replying to self or system messages
-        if (fromAddress && fromAddress.toLowerCase() === env.EMAIL_ENGINE_ACCOUNT.toLowerCase()) {
+        if (fromAddress && fromAddress.toLowerCase() === toAddress.toLowerCase()) {
           console.log('Skipping auto-reply to our own message.');
         } else if (threadId) {
           try {
             // 1) Fetch thread messages metadata
-            const searchResponse = await searchMessagesByThreadId(threadId);
+            const searchResponse = await searchMessagesByThreadId(threadId, toAddress);
             const threadMessages = searchResponse?.messages || [];
 
             // 2) Load latest message content
@@ -41,7 +80,7 @@ export async function handler(req: NextRequest) {
             const contentId = latest?.text?.id || latest?.id;
             let latestContentHtml = '';
             if (contentId) {
-              const content = await getMessageContentOnDemand(contentId);
+              const content = await getMessageContentOnDemand(contentId, toAddress);
               latestContentHtml = content.html || content.textContent || '';
             }
 
@@ -54,11 +93,11 @@ export async function handler(req: NextRequest) {
 
             // 4) Generate reply via OpenAI (prompt aligned with auto-reply route)
             const openai = createOpenAI();
-            const prompt = `You are an email assistant. Based on the following email conversation thread, generate a natural and contextual reply. \n\nIMPORTANT: \n- This is a REPLY to the most recent message, not a new email\n- Do NOT include a subject line\n- Do NOT include "From:" or "To:" headers\n- Generate ONLY the reply content in natural language\n- Keep it professional but conversational\n- Reference the conversation context appropriately\n- Keep it concise (2-4 sentences)\n\nCONTEXT: You are replying as ${env.EMAIL_ENGINE_ACCOUNT} - this is your email address and identity or you can find your identity from the conversation context for example you can find name using ${env.EMAIL_ENGINE_ACCOUNT} in the conversation context another example \n\n"from": {\n                "name": "Srivathsav Kyatham",\n                "address": "srivathsavkyatham@gmail.com"\n            },\n            "replyTo": [\n                {\n                    "name": "Srivathsav Kyatham",\n                    "address": "srivathsavkyatham@gmail.com"\n                }\n            ],\n            "to": [\n                {\n                    "name": "me.maverick369",\n                    "address": "me.maverick369@gmail.com"\n                }\n            ], here Srivathsav Kyatham is name and srivathsavkyatham@gmail.com is your email address and me.maverick369 is name and me.maverick369@gmail.com is your email address.\n\nEmail Thread:\n${conversationContext}\n\nGenerate a natural reply as ${env.EMAIL_ENGINE_ACCOUNT}:`;
+            const prompt = `You are an email assistant. Based on the following email conversation thread, generate a natural and contextual reply. \n\nIMPORTANT: \n- This is a REPLY to the most recent message, not a new email\n- Do NOT include a subject line\n- Do NOT include "From:" or "To:" headers\n- Generate ONLY the reply content in natural language\n- Keep it professional but conversational\n- Reference the conversation context appropriately\n- Keep it concise (2-4 sentences)\n\nCONTEXT: You are replying as ${toAddress} - this is your email address and identity or you can find your identity from the conversation context for example you can find name using ${toAddress} in the conversation context another example \n\n"from": {\n                "name": "Srivathsav Kyatham",\n                "address": "srivathsavkyatham@gmail.com"\n            },\n            "replyTo": [\n                {\n                    "name": "Srivathsav Kyatham",\n                    "address": "srivathsavkyatham@gmail.com"\n                }\n            ],\n            "to": [\n                {\n                    "name": "me.maverick369",\n                    "address": "me.maverick369@gmail.com"\n                }\n            ], here Srivathsav Kyatham is name and srivathsavkyatham@gmail.com is your email address and me.maverick369 is name and me.maverick369@gmail.com is your email address.\n\nEmail Thread:\n${conversationContext}\n\nGenerate a natural reply as ${toAddress}:`;
             const completion = await openai.chat.completions.create({
               model: 'gpt-4o-mini',
               messages: [
-                { role: 'system', content: `You write natural email replies as ${env.EMAIL_ENGINE_ACCOUNT}.` },
+                { role: 'system', content: `You write natural email replies as ${toAddress}.` },
                 { role: 'user', content: prompt },
               ],
               temperature: 0.6,
@@ -80,7 +119,7 @@ export async function handler(req: NextRequest) {
                     action: 'reply',
                   },
                 },
-                env.EMAIL_ENGINE_ACCOUNT
+                toAddress // Use the receiving email address (active account)
               );
               console.log('Auto-reply send results:', results);
 
@@ -94,7 +133,7 @@ export async function handler(req: NextRequest) {
                 await emailDb.createEmail({
                   messageId,
                   threadId,
-                  from: env.EMAIL_ENGINE_ACCOUNT,
+                  from: toAddress, // Use the receiving email address (active account)
                   to: [fromAddress],
                   subject: `Re: ${reqBody?.data?.subject || ''}`.trim(),
                   content: { 

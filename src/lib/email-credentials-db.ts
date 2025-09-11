@@ -76,11 +76,15 @@ export class EmailCredentialsDatabase {
     const collection = await this.getCollection();
     const now = new Date();
     
+    // Ensure only the very first credentials for a user is active by default
+    // Subsequent additions should be inactive until explicitly switched
+    const existingCount = await collection.countDocuments({ userId: credentialsData.userId });
+    
     const credentials: EmailCredentials = {
       _id: new ObjectId(),
       ...credentialsData,
       sendingLimitExceeded: false,
-      isActive: true,
+      isActive: existingCount === 0, // first account becomes active; others default to inactive
       createdAt: now,
       updatedAt: now,
     };
@@ -152,5 +156,13 @@ export class EmailCredentialsDatabase {
       userId: new ObjectId(userId), 
       isActive: true 
     });
+  }
+
+  async getUserIdByEmail(emailId: string): Promise<ObjectId | null> {
+    const collection = await this.getCollection();
+    const credentials = await collection.findOne({ 
+      emailId: emailId.toLowerCase()
+    });
+    return credentials?.userId || null;
   }
 }

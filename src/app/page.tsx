@@ -22,18 +22,34 @@ export default function Home() {
 	const [previewContent, setPreviewContent] = useState<{ subject: string; html: string; text: string } | null>(null);
 	const [isEditingPreview, setIsEditingPreview] = useState(false);
 	const [recipients, setRecipients] = useState<string[]>([]);
+	const [requiresAccountSetup, setRequiresAccountSetup] = useState(false);
+	const [emailError, setEmailError] = useState<string>("");
 
 	const checkEmails = async () => {
 		try {
 			setLoading(true);
+			setRequiresAccountSetup(false);
+			setEmailError("");
+			
 			const response = await fetch("/api/emails?pageSize=100");
 			if (!response.ok) {
 				throw new Error("Failed to fetch emails");
 			}
 			const data = await response.json();
-			setEmails(data.messages || []);
+			
+			// Check if account setup is required
+			if (data.requiresAccountSetup) {
+				setRequiresAccountSetup(true);
+				setEmails([]);
+			} else if (data.error) {
+				setEmailError(data.error);
+				setEmails([]);
+			} else {
+				setEmails(data.messages || []);
+			}
 		} catch (error) {
 			console.error("Error fetching emails:", error);
+			setEmailError("Failed to fetch emails");
 		} finally {
 			setLoading(false);
 		}
@@ -170,6 +186,10 @@ export default function Home() {
 								loading={loading}
 								onPreviewGenerated={handlePreviewGenerated}
 								onSendEmail={handleSendEmail}
+								requiresAccountSetup={requiresAccountSetup}
+								emailError={emailError}
+								onRefresh={checkEmails}
+								onNavigateToAccounts={() => setActiveTab("accounts")}
 							/>
 						</div>
 						{/* Sidebar */}

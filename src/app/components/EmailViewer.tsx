@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import AiRepliesTab from "./AiRepliesTab";
 import { Reply, Send, ChevronUp, ChevronDown, EllipsisVertical } from "lucide-react";
 import { EmailMessage } from "@/lib/email-engine";
 import { Button } from '@/components/ui/button';
@@ -164,16 +163,6 @@ export default function EmailViewer({
 					</div>
 
 
-					{showAiReplies && (
-						<div className="w-full mt-4 ">
-							<AiRepliesTab
-								replyText={replyText}
-								autoReply={autoReply}
-								onReplyTextChange={onReplyTextChange}
-								onAutoReplyChange={onAutoReplyChange}
-							/>
-						</div>
-					)}
 
 					{showActions && (
 						<div className="flex flex-wrap gap-3 py-4 ">

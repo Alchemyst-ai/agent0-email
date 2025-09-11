@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerEnv } from '@/lib/env';
 import { createOpenAI } from '@/lib/ai';
 import { searchMessagesByThreadId, getMessageContentOnDemand } from '@/lib/email-engine';
+import { AuthService } from '@/lib/auth';
+import { EmailCredentialsDatabase } from '@/lib/email-credentials-db';
 
 export async function POST(req: NextRequest) {
 	try {
@@ -19,10 +21,26 @@ export async function POST(req: NextRequest) {
 			const openai = createOpenAI();
 
 			console.log(`Starting auto-reply generation for thread: ${threadId}`);
-			console.log(`Replying as: ${env.EMAIL_ENGINE_ACCOUNT}`);
+			// Resolve active account for the authenticated user
+			let accountEmail: string | undefined = undefined;
+			try {
+				const user = await AuthService.getCurrentUser(req);
+				if (user) {
+					const db = EmailCredentialsDatabase.getInstance();
+					const active = await db.getActiveCredentials(user._id.toString());
+					accountEmail = active?.emailId || undefined;
+				}
+			} catch {}
+			if (!accountEmail) {
+				return NextResponse.json(
+					{ error: 'No active account found for user' },
+					{ status: 400 }
+				);
+			}
+			console.log(`Replying as: ${accountEmail}`);
 
 			// Step 1: Get all messages in the thread
-			const searchResponse = await searchMessagesByThreadId(threadId);
+			const searchResponse = await searchMessagesByThreadId(threadId, accountEmail);
 			
 			if (!searchResponse || !searchResponse.messages || searchResponse.messages.length === 0) {
 				return NextResponse.json(
@@ -44,7 +62,7 @@ export async function POST(req: NextRequest) {
 					const contentId = message.text?.id || message.id;
 					console.log(`Using content ID: ${contentId} for message ${message.id}`);
 					
-					const content = await getMessageContentOnDemand(contentId);
+					const content = await getMessageContentOnDemand(contentId, accountEmail);
 					messagesWithContent.push({
 						id: message.id,
 						from: message.from,
@@ -78,7 +96,7 @@ IMPORTANT:
 - Reference the conversation context appropriately
 - Keep it concise (2-4 sentences)
 
-CONTEXT: You are replying as ${env.EMAIL_ENGINE_ACCOUNT} - this is your email address and identity or you can find your identity from the conversation context for example you can find name using ${env.EMAIL_ENGINE_ACCOUNT} in the conversation context another example 
+CONTEXT: You are replying as ${accountEmail} - this is your email address and identity or you can find your identity from the conversation context for example you can find name using ${accountEmail} in the conversation context another example 
 
 "from": {
                 "name": "Srivathsav Kyatham",
@@ -100,14 +118,14 @@ CONTEXT: You are replying as ${env.EMAIL_ENGINE_ACCOUNT} - this is your email ad
 Email Thread:
 ${conversationContext}
 
-Generate a natural reply as ${env.EMAIL_ENGINE_ACCOUNT}:`;
+Generate a natural reply as ${accountEmail}:`;
 
 			const completion = await openai.chat.completions.create({
 				model: 'gpt-3.5-turbo',
 				messages: [
 					{
 						role: 'system',
-						content: `You are a helpful email assistant that generates natural replies to email conversations. You are replying as ${env.EMAIL_ENGINE_ACCOUNT} - this is your email identity and you should write replies as if you are this person.`
+						content: `You are a helpful email assistant that generates natural replies to email conversations. You are replying as ${accountEmail} - this is your email identity and you should write replies as if you are this person.`
 					},
 					{
 						role: 'user',

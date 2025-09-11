@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMessageContentOnDemand } from "@/lib/email-engine";
+import { AuthService } from "@/lib/auth";
+import { EmailCredentialsDatabase } from "@/lib/email-credentials-db";
+import { getServerEnv } from "@/lib/env";
 
 export async function GET(
 	req: NextRequest,
@@ -16,8 +19,23 @@ export async function GET(
 		}
 		
 		console.log('Fetching content for message ID:', messageId);
-		
-		const content = await getMessageContentOnDemand(messageId);
+
+		// Resolve active account email to query EmailEngine correctly
+		let accountEmail: string | undefined = undefined;
+		try {
+			const user = await AuthService.getCurrentUser(req);
+			if (user) {
+				const db = EmailCredentialsDatabase.getInstance();
+				const active = await db.getActiveCredentials(user._id.toString());
+				accountEmail = active?.emailId || undefined;
+			}
+		} catch {}
+		if (!accountEmail) {
+			const env = getServerEnv();
+			accountEmail = env.EMAIL_ENGINE_ACCOUNT;
+		}
+
+		const content = await getMessageContentOnDemand(messageId, accountEmail);
 		
 		console.log('Message content response:', {
 			messageId,
